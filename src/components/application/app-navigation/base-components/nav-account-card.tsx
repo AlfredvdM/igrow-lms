@@ -7,6 +7,8 @@ import { BookOpen01, ChevronSelectorVertical, LogOut01, Plus, Settings01, User01
 import { useFocusManager } from "react-aria";
 import type { DialogProps as AriaDialogProps } from "react-aria-components";
 import { Button as AriaButton, Dialog as AriaDialog, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
+import { useUser, useClerk } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { Button } from "@/components/base/buttons/button";
 import { RadioButtonBase } from "@/components/base/radio-buttons/radio-buttons";
@@ -50,6 +52,20 @@ export const NavAccountMenu = ({
 }: AriaDialogProps & { className?: string; accounts?: NavAccountType[]; selectedAccountId?: string }) => {
     const focusManager = useFocusManager();
     const dialogRef = useRef<HTMLDivElement>(null);
+    const { signOut } = useClerk();
+    const router = useRouter();
+
+    const handleSignOut = () => {
+        signOut({ redirectUrl: '/sign-in' });
+    };
+
+    const handleViewProfile = () => {
+        router.push('/profile');
+    };
+
+    const handleSettings = () => {
+        router.push('/settings');
+    };
 
     const onKeyDown = useCallback(
         (e: KeyboardEvent) => {
@@ -86,8 +102,8 @@ export const NavAccountMenu = ({
         >
             <div className="rounded-xl bg-primary ring-1 ring-secondary">
                 <div className="flex flex-col gap-0.5 py-1.5">
-                    <NavAccountCardMenuItem label="View profile" icon={User01} shortcut="⌘K->P" />
-                    <NavAccountCardMenuItem label="Account settings" icon={Settings01} shortcut="⌘S" />
+                    <NavAccountCardMenuItem label="View profile" icon={User01} shortcut="⌘K->P" onClick={handleViewProfile} />
+                    <NavAccountCardMenuItem label="Account settings" icon={Settings01} shortcut="⌘S" onClick={handleSettings} />
                     <NavAccountCardMenuItem label="Documentation" icon={BookOpen01} />
                 </div>
                 <div className="flex flex-col gap-0.5 border-t border-secondary py-1.5">
@@ -117,7 +133,7 @@ export const NavAccountMenu = ({
             </div>
 
             <div className="pt-1 pb-1.5">
-                <NavAccountCardMenuItem label="Sign out" icon={LogOut01} shortcut="⌥⇧Q" />
+                <NavAccountCardMenuItem label="Sign out" icon={LogOut01} shortcut="⌥⇧Q" onClick={handleSignOut} />
             </div>
         </AriaDialog>
     );
@@ -165,22 +181,41 @@ export const NavAccountCard = ({
 }) => {
     const triggerRef = useRef<HTMLDivElement>(null);
     const isDesktop = useBreakpoint("lg");
+    const { user, isLoaded } = useUser();
 
-    const selectedAccount = placeholderAccounts.find((account) => account.id === selectedAccountId);
+    // Use Clerk user data if available, otherwise fallback to placeholder
+    const currentUser = isLoaded && user ? {
+        avatar: user.imageUrl,
+        name: user.fullName || user.firstName || 'User',
+        email: user.primaryEmailAddress?.emailAddress || '',
+        status: 'online' as const,
+    } : {
+        avatar: placeholderAccounts[0].avatar,
+        name: placeholderAccounts[0].name,
+        email: placeholderAccounts[0].email,
+        status: placeholderAccounts[0].status,
+    };
 
-    if (!selectedAccount) {
-        console.warn(`Account with ID ${selectedAccountId} not found in <NavAccountCard />`);
-        return null;
+    if (!isLoaded) {
+        return (
+            <div className="relative flex items-center gap-3 rounded-xl p-3 ring-1 ring-secondary ring-inset">
+                <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200" />
+                <div className="flex-1">
+                    <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
+                    <div className="mt-1 h-3 w-32 animate-pulse rounded bg-gray-200" />
+                </div>
+            </div>
+        );
     }
 
     return (
         <div ref={triggerRef} className="relative flex items-center gap-3 rounded-xl p-3 ring-1 ring-secondary ring-inset">
             <AvatarLabelGroup
                 size="md"
-                src={selectedAccount.avatar}
-                title={selectedAccount.name}
-                subtitle={selectedAccount.email}
-                status={selectedAccount.status}
+                src={currentUser.avatar}
+                title={currentUser.name}
+                subtitle={currentUser.email}
+                status={currentUser.status}
             />
 
             <div className="absolute top-1.5 right-1.5">
