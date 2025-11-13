@@ -5,8 +5,8 @@ export default async function RootPage() {
   const { userId } = await auth();
 
   if (userId) {
-    // User is authenticated, redirect to dashboard
-    redirect('/dashboard');
+    // User is authenticated, redirect to overview
+    redirect('/overview');
   } else {
     // User is not authenticated, redirect to sign-in
     redirect('/sign-in');
