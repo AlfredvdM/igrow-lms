@@ -1,6 +1,7 @@
 "use client";
 
 import type { PropsWithChildren } from "react";
+import Image from "next/image";
 import { X as CloseIcon, Menu02 } from "@untitledui/icons";
 import {
     Button as AriaButton,
@@ -9,14 +10,23 @@ import {
     Modal as AriaModal,
     ModalOverlay as AriaModalOverlay,
 } from "react-aria-components";
-import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { cx } from "@/utils/cx";
 
 export const MobileNavigationHeader = ({ children }: PropsWithChildren) => {
     return (
         <AriaDialogTrigger>
             <header className="flex h-16 items-center justify-between border-b border-secondary bg-primary py-3 pr-2 pl-4 lg:hidden">
-                <UntitledLogo />
+                <div className="flex items-center gap-2">
+                    <Image
+                        src="https://cdn.prod.website-files.com/68f0849e4b2688b01e255a47/690983d52fd448e267770035_IGrow-Rentals%202.png"
+                        alt="IGrow Rentals"
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 object-contain"
+                        priority
+                    />
+                    <span className="text-lg font-semibold text-fg-primary">IGrow Rentals</span>
+                </div>
 
                 <AriaButton
                     aria-label="Expand navigation menu"

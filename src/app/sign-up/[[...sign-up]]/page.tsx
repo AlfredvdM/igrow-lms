@@ -47,6 +47,7 @@ export default function SignUpPage() {
     // Validate email domain
     if (!isAllowedEmailDomain(email)) {
       setError('Access restricted to @gasmarketing.co.za and @igrow.co.za email addresses only.');
+      setIsLoading(false);
       return;
     }
 
@@ -54,19 +55,28 @@ export default function SignUpPage() {
     setError(null);
 
     try {
-      await signUp.create({
+      // Create the sign-up
+      const signUpAttempt = await signUp.create({
         firstName,
         lastName,
         emailAddress: email,
         password,
       });
 
-      await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+      // Prepare email verification
+      await signUpAttempt.prepareEmailAddressVerification({ strategy: 'email_code' });
       setPendingVerification(true);
     } catch (err: unknown) {
       const clerkError = err as { errors?: Array<{ message: string; longMessage?: string }> };
       if (clerkError.errors && clerkError.errors.length > 0) {
-        setError(clerkError.errors[0].longMessage || clerkError.errors[0].message);
+        const errorMessage = clerkError.errors[0].longMessage || clerkError.errors[0].message;
+
+        // Check for domain restriction errors from Clerk (server-side validation)
+        if (errorMessage.toLowerCase().includes('not allowed') || errorMessage.toLowerCase().includes('allowlist')) {
+          setError('Access restricted to @gasmarketing.co.za and @igrow.co.za email addresses only.');
+        } else {
+          setError(errorMessage);
+        }
       } else {
         setError('An unexpected error occurred. Please try again.');
       }
@@ -339,7 +349,7 @@ export default function SignUpPage() {
             Manage your leads efficiently
           </h2>
           <p className="mt-4 text-lg text-white/80">
-            Track, organize, and convert your real estate leads with our powerful lead management system.
+            Track, organise, and convert your real estate leads with our powerful lead management system.
           </p>
         </div>
       </div>

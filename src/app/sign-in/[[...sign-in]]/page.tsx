@@ -108,7 +108,7 @@ export default function SignInPage() {
       {/* Left side - Sign in form */}
       <div className="flex w-full flex-col justify-between px-4 py-8 lg:w-1/2 lg:px-12 xl:px-24">
         {/* Logo */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2 lg:justify-start">
           <Image
             src="https://cdn.prod.website-files.com/68f0849e4b2688b01e255a47/690983d52fd448e267770035_IGrow-Rentals%202.png"
             alt="IGrow Rentals"
@@ -244,7 +244,7 @@ export default function SignInPage() {
             Manage your leads efficiently
           </h2>
           <p className="mt-4 text-lg text-white/80">
-            Track, organize, and convert your real estate leads with our powerful lead management system.
+            Track, organise, and convert your real estate leads with our powerful lead management system.
           </p>
         </div>
       </div>
