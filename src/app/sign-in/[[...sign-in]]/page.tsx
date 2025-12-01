@@ -9,6 +9,8 @@ import { Mail01, Lock01 } from '@untitledui/icons';
 import { Button } from '@/components/base/buttons/button';
 import { SocialButton } from '@/components/base/buttons/social-button';
 import { Input } from '@/components/base/input/input';
+import { DialogTrigger, ModalOverlay, Modal, Dialog } from '@/components/application/modals/modal';
+import { ForgotPasswordModalContent } from '@/components/auth/forgot-password-modal';
 
 // Allowed email domains for sign-in
 const ALLOWED_DOMAINS = ['gasmarketing.co.za', 'igrow.co.za'];
@@ -188,12 +190,21 @@ export default function SignInPage() {
             />
 
             <div className="flex items-center justify-end">
-              <Link
-                href="/forgot-password"
-                className="text-sm font-semibold text-fg-brand-primary hover:text-fg-brand-primary_hover"
-              >
-                Forgot password?
-              </Link>
+              <DialogTrigger>
+                <button
+                  type="button"
+                  className="text-sm font-semibold text-fg-brand-primary hover:text-fg-brand-primary_hover"
+                >
+                  Forgot password?
+                </button>
+                <ModalOverlay isDismissable>
+                  <Modal>
+                    <Dialog className="w-full max-w-lg">
+                      <ForgotPasswordModalContent />
+                    </Dialog>
+                  </Modal>
+                </ModalOverlay>
+              </DialogTrigger>
             </div>
 
             <Button
