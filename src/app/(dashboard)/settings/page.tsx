@@ -112,16 +112,14 @@ function PasswordChangeModalContent({
 
             {/* Modal Footer */}
             <div className="mt-6 flex justify-end gap-3 border-t border-border-secondary pt-4">
-                <form method="dialog" className="contents">
-                    <Button
-                        type="submit"
-                        size="md"
-                        color="secondary"
-                        isDisabled={isChangingPassword}
-                    >
-                        Cancel
-                    </Button>
-                </form>
+                <Button
+                    size="md"
+                    color="secondary"
+                    isDisabled={isChangingPassword}
+                    onClick={close}
+                >
+                    Cancel
+                </Button>
                 <Button
                     size="md"
                     color="primary"
@@ -130,6 +128,55 @@ function PasswordChangeModalContent({
                     isDisabled={isChangingPassword}
                 >
                     Update password
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+// Delete Account Modal Content Component
+function DeleteAccountModalContent() {
+    const state = useContext(OverlayTriggerStateContext);
+    const close = () => {
+        if (state?.close) {
+            state.close();
+        }
+    };
+
+    return (
+        <div className="rounded-xl bg-primary p-6 shadow-xl ring-1 ring-secondary ring-inset">
+            {/* Modal Header */}
+            <div className="mb-4">
+                <h2 className="text-lg font-semibold text-fg-primary">Delete Account</h2>
+                <p className="mt-1 text-sm text-fg-tertiary">
+                    Are you absolutely sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.
+                </p>
+            </div>
+
+            {/* Modal Content */}
+            <div className="space-y-4">
+                <div className="rounded-lg border border-error-200 bg-error-50 p-4">
+                    <p className="text-sm font-semibold text-error-900">Warning: This action is irreversible</p>
+                    <ul className="mt-2 space-y-1 text-sm text-error-700">
+                        <li>• All your personal data will be deleted</li>
+                        <li>• You will lose access to all campaigns</li>
+                        <li>• Your team members will be notified</li>
+                        <li>• Active subscriptions will be cancelled</li>
+                    </ul>
+                </div>
+                <div>
+                    <Label htmlFor="confirmDelete">Type &quot;DELETE&quot; to confirm</Label>
+                    <Input id="confirmDelete" placeholder="DELETE" className="mt-2" />
+                </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="mt-6 flex justify-end gap-3 border-t border-border-secondary pt-4">
+                <Button size="md" color="secondary" onClick={close}>
+                    Cancel
+                </Button>
+                <Button size="md" color="primary" className="!bg-error-600 hover:!bg-error-700">
+                    Yes, delete my account
                 </Button>
             </div>
         </div>
@@ -354,44 +401,7 @@ function SettingsContent() {
                                         <ModalOverlay isDismissable>
                                             <Modal>
                                                 <Dialog className="w-full max-w-lg">
-                                                    <div className="rounded-xl bg-primary p-6 shadow-xl ring-1 ring-secondary ring-inset">
-                                                        {/* Modal Header */}
-                                                        <div className="mb-4">
-                                                            <h2 className="text-lg font-semibold text-fg-primary">Delete Account</h2>
-                                                            <p className="mt-1 text-sm text-fg-tertiary">
-                                                                Are you absolutely sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.
-                                                            </p>
-                                                        </div>
-
-                                                        {/* Modal Content */}
-                                                        <div className="space-y-4">
-                                                            <div className="rounded-lg border border-error-200 bg-error-50 p-4">
-                                                                <p className="text-sm font-semibold text-error-900">Warning: This action is irreversible</p>
-                                                                <ul className="mt-2 space-y-1 text-sm text-error-700">
-                                                                    <li>• All your personal data will be deleted</li>
-                                                                    <li>• You will lose access to all campaigns</li>
-                                                                    <li>• Your team members will be notified</li>
-                                                                    <li>• Active subscriptions will be cancelled</li>
-                                                                </ul>
-                                                            </div>
-                                                            <div>
-                                                                <Label htmlFor="confirmDelete">Type "DELETE" to confirm</Label>
-                                                                <Input id="confirmDelete" placeholder="DELETE" className="mt-2" />
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Modal Footer */}
-                                                        <div className="mt-6 flex justify-end gap-3 border-t border-border-secondary pt-4">
-                                                            <form method="dialog" className="contents">
-                                                                <Button type="submit" size="md" color="secondary">
-                                                                    Cancel
-                                                                </Button>
-                                                            </form>
-                                                            <Button size="md" color="primary" className="!bg-error-600 hover:!bg-error-700">
-                                                                Yes, delete my account
-                                                            </Button>
-                                                        </div>
-                                                    </div>
+                                                    <DeleteAccountModalContent />
                                                 </Dialog>
                                             </Modal>
                                         </ModalOverlay>
