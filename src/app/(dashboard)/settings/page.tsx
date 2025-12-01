@@ -17,7 +17,6 @@ function SettingsContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [selectedTab, setSelectedTab] = useState("profile");
-    const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -33,7 +32,7 @@ function SettingsContent() {
         }
     }, [searchParams]);
 
-    const handlePasswordChange = async () => {
+    const handlePasswordChange = async (close: () => void) => {
         setPasswordError(null);
         setPasswordSuccess(false);
 
@@ -69,8 +68,9 @@ function SettingsContent() {
 
             // Close modal after 2 seconds
             setTimeout(() => {
-                setShowPasswordModal(false);
+                close();
                 setPasswordSuccess(false);
+                setPasswordError(null);
             }, 2000);
         } catch (err: unknown) {
             const clerkError = err as { errors?: Array<{ message: string; longMessage?: string }> };
@@ -184,106 +184,101 @@ function SettingsContent() {
                                             size="sm"
                                             color="secondary"
                                             className="mt-4"
-                                            onClick={() => {
-                                                setShowPasswordModal(true);
-                                                setPasswordError(null);
-                                                setPasswordSuccess(false);
-                                                setCurrentPassword('');
-                                                setNewPassword('');
-                                                setConfirmPassword('');
-                                            }}
                                         >
                                             Change password
                                         </Button>
                                         <ModalOverlay>
-                                            <Modal>
-                                                <Dialog className="w-full max-w-lg">
-                                                    <div className="rounded-xl bg-primary p-6 shadow-xl ring-1 ring-secondary ring-inset">
-                                                        {/* Modal Header */}
-                                                        <div className="mb-4">
-                                                            <h2 className="text-lg font-semibold text-fg-primary">Change Password</h2>
-                                                            <p className="mt-1 text-sm text-fg-tertiary">
-                                                                Enter your current password and choose a new password.
-                                                            </p>
-                                                        </div>
-
-                                                        {/* Success Message */}
-                                                        {passwordSuccess && (
-                                                            <div className="mb-6 rounded-lg border border-success-300 bg-success-50 p-4">
-                                                                <p className="text-sm text-success-700">Password updated successfully!</p>
+                                            {({ close }) => (
+                                                <Modal>
+                                                    <Dialog className="w-full max-w-lg">
+                                                        <div className="rounded-xl bg-primary p-6 shadow-xl ring-1 ring-secondary ring-inset">
+                                                            {/* Modal Header */}
+                                                            <div className="mb-4">
+                                                                <h2 className="text-lg font-semibold text-fg-primary">Change Password</h2>
+                                                                <p className="mt-1 text-sm text-fg-tertiary">
+                                                                    Enter your current password and choose a new password.
+                                                                </p>
                                                             </div>
-                                                        )}
 
-                                                        {/* Error Message */}
-                                                        {passwordError && (
-                                                            <div className="mb-6 rounded-lg border border-error-300 bg-error-50 p-4">
-                                                                <p className="text-sm text-error-700">{passwordError}</p>
+                                                            {/* Success Message */}
+                                                            {passwordSuccess && (
+                                                                <div className="mb-6 rounded-lg border border-success-300 bg-success-50 p-4">
+                                                                    <p className="text-sm text-success-700">Password updated successfully!</p>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Error Message */}
+                                                            {passwordError && (
+                                                                <div className="mb-6 rounded-lg border border-error-300 bg-error-50 p-4">
+                                                                    <p className="text-sm text-error-700">{passwordError}</p>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Modal Content */}
+                                                            <div className="space-y-4">
+                                                                <div>
+                                                                    <Label htmlFor="currentPassword">Current Password</Label>
+                                                                    <Input
+                                                                        id="currentPassword"
+                                                                        type="password"
+                                                                        placeholder="Enter current password"
+                                                                        className="mt-2"
+                                                                        value={currentPassword}
+                                                                        onChange={setCurrentPassword}
+                                                                        isDisabled={isChangingPassword}
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <Label htmlFor="newPassword">New Password</Label>
+                                                                    <Input
+                                                                        id="newPassword"
+                                                                        type="password"
+                                                                        placeholder="Enter new password"
+                                                                        className="mt-2"
+                                                                        value={newPassword}
+                                                                        onChange={setNewPassword}
+                                                                        isDisabled={isChangingPassword}
+                                                                    />
+                                                                    <p className="mt-2 text-sm text-fg-quaternary">Must be at least 8 characters.</p>
+                                                                </div>
+                                                                <div>
+                                                                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                                                                    <Input
+                                                                        id="confirmPassword"
+                                                                        type="password"
+                                                                        placeholder="Confirm new password"
+                                                                        className="mt-2"
+                                                                        value={confirmPassword}
+                                                                        onChange={setConfirmPassword}
+                                                                        isDisabled={isChangingPassword}
+                                                                    />
+                                                                </div>
                                                             </div>
-                                                        )}
 
-                                                        {/* Modal Content */}
-                                                        <div className="space-y-4">
-                                                            <div>
-                                                                <Label htmlFor="currentPassword">Current Password</Label>
-                                                                <Input
-                                                                    id="currentPassword"
-                                                                    type="password"
-                                                                    placeholder="Enter current password"
-                                                                    className="mt-2"
-                                                                    value={currentPassword}
-                                                                    onChange={setCurrentPassword}
+                                                            {/* Modal Footer */}
+                                                            <div className="mt-6 flex justify-end gap-3 border-t border-border-secondary pt-4">
+                                                                <Button
+                                                                    size="md"
+                                                                    color="secondary"
                                                                     isDisabled={isChangingPassword}
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <Label htmlFor="newPassword">New Password</Label>
-                                                                <Input
-                                                                    id="newPassword"
-                                                                    type="password"
-                                                                    placeholder="Enter new password"
-                                                                    className="mt-2"
-                                                                    value={newPassword}
-                                                                    onChange={setNewPassword}
+                                                                    onPress={close}
+                                                                >
+                                                                    Cancel
+                                                                </Button>
+                                                                <Button
+                                                                    size="md"
+                                                                    color="primary"
+                                                                    onClick={() => handlePasswordChange(close)}
+                                                                    isLoading={isChangingPassword}
                                                                     isDisabled={isChangingPassword}
-                                                                />
-                                                                <p className="mt-2 text-sm text-fg-quaternary">Must be at least 8 characters.</p>
-                                                            </div>
-                                                            <div>
-                                                                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                                                                <Input
-                                                                    id="confirmPassword"
-                                                                    type="password"
-                                                                    placeholder="Confirm new password"
-                                                                    className="mt-2"
-                                                                    value={confirmPassword}
-                                                                    onChange={setConfirmPassword}
-                                                                    isDisabled={isChangingPassword}
-                                                                />
+                                                                >
+                                                                    Update password
+                                                                </Button>
                                                             </div>
                                                         </div>
-
-                                                        {/* Modal Footer */}
-                                                        <div className="mt-6 flex justify-end gap-3 border-t border-border-secondary pt-4">
-                                                            <Button
-                                                                size="md"
-                                                                color="secondary"
-                                                                isDisabled={isChangingPassword}
-                                                            >
-                                                                Cancel
-                                                            </Button>
-                                                            <Button
-                                                                size="md"
-                                                                color="primary"
-                                                                onClick={handlePasswordChange}
-                                                                isLoading={isChangingPassword}
-                                                                isDisabled={isChangingPassword}
-                                                            >
-                                                                Update password
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                </Dialog>
-                                            </Modal>
+                                                    </Dialog>
+                                                </Modal>
+                                            )}
                                         </ModalOverlay>
                                     </DialogTrigger>
                                 </div>
