@@ -23,7 +23,7 @@ function SettingsContent() {
 
     // Update selected tab from URL parameter
     useEffect(() => {
-        const tabParam = searchParams.get('tab');
+        const tabParam = searchParams?.get('tab');
         if (tabParam && ['profile', 'appearance', 'security'].includes(tabParam)) {
             setSelectedTab(tabParam);
         }
