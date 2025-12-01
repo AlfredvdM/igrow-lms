@@ -1,22 +1,24 @@
 /**
- * Sync API Endpoint
+ * Sync API Endpoint (Pages Router)
  * Pulls data from Google Sheets and saves to Supabase
- * Protected by CRON_SECRET bearer token
+ * Using Pages Router to bypass Clerk middleware entirely
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
 import { google } from 'googleapis';
-import { supabaseAdmin } from '@/lib/supabase';
 import type {
   LeadInsert,
   PreferredContact,
   BestOutreachTime,
   ApartmentPreference,
   Campaign,
+  Database,
 } from '@/types/database';
 
-export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Allow up to 60 seconds for sync
+export const config = {
+  maxDuration: 60, // Allow up to 60 seconds for sync
+};
 
 interface SyncResult {
   campaign: string;
@@ -25,27 +27,37 @@ interface SyncResult {
   error?: string;
 }
 
+interface SyncResponse {
+  success: boolean;
+  error?: string;
+  results?: SyncResult[];
+  summary?: {
+    totalSynced: number;
+    totalSkipped: number;
+    campaignsSynced: number;
+    campaignsFailed: number;
+  };
+  message?: string;
+  timestamp?: string;
+}
+
 /**
- * Verify authentication for the sync endpoint
- * Accepts either:
- * - Vercel Cron: x-vercel-cron header (automatically set by Vercel)
- * - Manual: x-cron-secret header (avoids Clerk intercepting Authorization header)
+ * Create Supabase admin client
  */
-function verifyAuth(request: NextRequest): boolean {
-  // Check for Vercel Cron header (automatically added by Vercel for cron jobs)
-  const isVercelCron = request.headers.get('x-vercel-cron') === '1';
-  if (isVercelCron) {
-    return true;
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    throw new Error('Missing Supabase environment variables');
   }
 
-  // Check for custom header authentication (manual triggers)
-  // Using x-cron-secret instead of Authorization to avoid Clerk JWT parsing
-  const cronSecret = request.headers.get('x-cron-secret');
-  if (cronSecret && cronSecret === process.env.CRON_SECRET) {
-    return true;
-  }
-
-  return false;
+  return createClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }
 
 /**
@@ -257,7 +269,10 @@ function transformRowToLead(
 /**
  * Sync leads for a single campaign
  */
-async function syncCampaign(campaign: Campaign): Promise<SyncResult> {
+async function syncCampaign(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  campaign: Campaign
+): Promise<SyncResult> {
   const result: SyncResult = {
     campaign: campaign.slug,
     synced: 0,
@@ -307,7 +322,7 @@ async function syncCampaign(campaign: Campaign): Promise<SyncResult> {
     for (let i = 0; i < leads.length; i += batchSize) {
       const batch = leads.slice(i, i + batchSize);
 
-      const { error } = await supabaseAdmin
+      const { error } = await supabase
         .from('leads')
         .upsert(batch as any, {
           onConflict: 'campaign_id,email,submitted_at',
@@ -334,40 +349,47 @@ async function syncCampaign(campaign: Campaign): Promise<SyncResult> {
 }
 
 /**
- * Main sync logic - shared between GET and POST handlers
+ * Main API handler
  */
-async function handleSync(request: NextRequest) {
-  console.log('[Sync] Sync request received');
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<SyncResponse>
+) {
+  console.log('[Sync] Sync request received via Pages Router');
 
-  // Verify authentication
-  if (!verifyAuth(request)) {
+  // Only allow GET and POST
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
+  }
+
+  // Check auth - custom header or Vercel cron
+  const cronSecret = req.headers['x-cron-secret'];
+  const isVercelCron = req.headers['x-vercel-cron'] === '1';
+
+  if (!isVercelCron && cronSecret !== process.env.CRON_SECRET) {
     console.log('[Sync] Unauthorized request');
-    return NextResponse.json(
-      { success: false, error: 'Unauthorized' },
-      { status: 401 }
-    );
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
   try {
+    const supabase = getSupabaseAdmin();
+
     // Fetch all active campaigns from Supabase
     console.log('[Sync] Fetching active campaigns...');
 
-    const { data: campaigns, error: campaignsError } = await supabaseAdmin
+    const { data: campaigns, error: campaignsError } = await supabase
       .from('campaigns')
       .select('*')
       .eq('is_active', true);
 
     if (campaignsError) {
       console.error('[Sync] Error fetching campaigns:', campaignsError);
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch campaigns' },
-        { status: 500 }
-      );
+      return res.status(500).json({ success: false, error: 'Failed to fetch campaigns' });
     }
 
     if (!campaigns || campaigns.length === 0) {
       console.log('[Sync] No active campaigns found');
-      return NextResponse.json({
+      return res.status(200).json({
         success: true,
         results: [],
         message: 'No active campaigns to sync',
@@ -380,7 +402,7 @@ async function handleSync(request: NextRequest) {
     const results: SyncResult[] = [];
 
     for (const campaign of campaigns) {
-      const result = await syncCampaign(campaign);
+      const result = await syncCampaign(supabase, campaign);
       results.push(result);
     }
 
@@ -391,7 +413,7 @@ async function handleSync(request: NextRequest) {
 
     console.log(`[Sync] Sync completed: ${totalSynced} synced, ${totalSkipped} skipped, ${failedCampaigns} failed`);
 
-    return NextResponse.json({
+    return res.status(200).json({
       success: true,
       results,
       summary: {
@@ -404,28 +426,9 @@ async function handleSync(request: NextRequest) {
     });
   } catch (error) {
     console.error('[Sync] Unexpected error:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Sync failed',
-      },
-      { status: 500 }
-    );
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Sync failed',
+    });
   }
-}
-
-/**
- * GET /api/sync
- * Used by Vercel Cron for automatic syncing
- */
-export async function GET(request: NextRequest) {
-  return handleSync(request);
-}
-
-/**
- * POST /api/sync
- * Used for manual sync triggers
- */
-export async function POST(request: NextRequest) {
-  return handleSync(request);
 }
