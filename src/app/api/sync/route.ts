@@ -26,16 +26,26 @@ interface SyncResult {
 }
 
 /**
- * Verify the CRON_SECRET bearer token
+ * Verify authentication for the sync endpoint
+ * Accepts either:
+ * - Vercel Cron: x-vercel-cron header (automatically set by Vercel)
+ * - Manual: Authorization: Bearer <CRON_SECRET>
  */
 function verifyAuth(request: NextRequest): boolean {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return false;
+  // Check for Vercel Cron header (automatically added by Vercel for cron jobs)
+  const isVercelCron = request.headers.get('x-vercel-cron') === '1';
+  if (isVercelCron) {
+    return true;
   }
 
-  const token = authHeader.substring(7);
-  return token === process.env.CRON_SECRET;
+  // Check for Bearer token authentication (manual triggers)
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    return token === process.env.CRON_SECRET;
+  }
+
+  return false;
 }
 
 /**
@@ -324,10 +334,9 @@ async function syncCampaign(campaign: Campaign): Promise<SyncResult> {
 }
 
 /**
- * POST /api/sync
- * Main sync endpoint
+ * Main sync logic - shared between GET and POST handlers
  */
-export async function POST(request: NextRequest) {
+async function handleSync(request: NextRequest) {
   console.log('[Sync] Sync request received');
 
   // Verify authentication
@@ -403,4 +412,20 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * GET /api/sync
+ * Used by Vercel Cron for automatic syncing
+ */
+export async function GET(request: NextRequest) {
+  return handleSync(request);
+}
+
+/**
+ * POST /api/sync
+ * Used for manual sync triggers
+ */
+export async function POST(request: NextRequest) {
+  return handleSync(request);
 }
