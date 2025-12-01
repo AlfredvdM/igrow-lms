@@ -29,7 +29,7 @@ async function getCampaignBySlug(slug: string): Promise<Campaign | null> {
     return null;
   }
 
-  return data;
+  return data as Campaign;
 }
 
 // ============================================================================
@@ -146,7 +146,7 @@ export function useLeads(campaignSlug: string, options: UseLeadsOptions = {}) {
       }
 
       return {
-        data: data || [],
+        data: (data as Lead[]) || [],
         count: count || 0,
       };
     },
@@ -182,7 +182,7 @@ export function useLeadStats(campaignSlug: string) {
       }
 
       // Get all leads for this campaign
-      const { data: leads, error } = await supabase
+      const { data, error } = await supabase
         .from('leads')
         .select('*')
         .eq('campaign_id', campaign.id);
@@ -191,6 +191,8 @@ export function useLeadStats(campaignSlug: string) {
         console.error('Error fetching lead stats:', error);
         throw error;
       }
+
+      const leads = data as Lead[] | null;
 
       const now = new Date();
       const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -278,12 +280,14 @@ export function useLeadTimeline(campaignSlug: string, days: number | null = 30) 
         query = query.gte('submitted_at', startDate.toISOString());
       }
 
-      const { data: leads, error } = await query;
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching lead timeline:', error);
         throw error;
       }
+
+      const leads = data as { submitted_at: string }[] | null;
 
       // Create a map of date -> count
       const dateCounts: Record<string, number> = {};
@@ -339,7 +343,7 @@ export function useApartmentBreakdown(campaignSlug: string) {
         return [];
       }
 
-      const { data: leads, error } = await supabase
+      const { data, error } = await supabase
         .from('leads')
         .select('apartment_preference')
         .eq('campaign_id', campaign.id);
@@ -348,6 +352,8 @@ export function useApartmentBreakdown(campaignSlug: string) {
         console.error('Error fetching apartment breakdown:', error);
         throw error;
       }
+
+      const leads = data as { apartment_preference: string | null }[] | null;
 
       // Count by apartment type
       const counts: Record<string, number> = {};
@@ -391,7 +397,7 @@ export function useContactMethodBreakdown(campaignSlug: string) {
         return [];
       }
 
-      const { data: leads, error } = await supabase
+      const { data, error } = await supabase
         .from('leads')
         .select('preferred_contact')
         .eq('campaign_id', campaign.id);
@@ -400,6 +406,8 @@ export function useContactMethodBreakdown(campaignSlug: string) {
         console.error('Error fetching contact method breakdown:', error);
         throw error;
       }
+
+      const leads = data as { preferred_contact: string | null }[] | null;
 
       // Count by contact method
       const counts: Record<string, number> = {};
@@ -443,7 +451,7 @@ export function useEmploymentBreakdown(campaignSlug: string) {
         return [];
       }
 
-      const { data: leads, error } = await supabase
+      const { data, error } = await supabase
         .from('leads')
         .select('employment_status')
         .eq('campaign_id', campaign.id);
@@ -452,6 +460,8 @@ export function useEmploymentBreakdown(campaignSlug: string) {
         console.error('Error fetching employment breakdown:', error);
         throw error;
       }
+
+      const leads = data as { employment_status: string | null }[] | null;
 
       // Count by employment status
       const counts: Record<string, number> = {};
@@ -495,7 +505,7 @@ export function useLeadSourceBreakdown(campaignSlug: string) {
         return [];
       }
 
-      const { data: leads, error } = await supabase
+      const { data, error } = await supabase
         .from('leads')
         .select('lead_source')
         .eq('campaign_id', campaign.id);
@@ -504,6 +514,8 @@ export function useLeadSourceBreakdown(campaignSlug: string) {
         console.error('Error fetching lead source breakdown:', error);
         throw error;
       }
+
+      const leads = data as { lead_source: string | null }[] | null;
 
       // Count by lead source
       const counts: Record<string, number> = {};
@@ -555,7 +567,7 @@ export function useCampaigns() {
         throw error;
       }
 
-      return data || [];
+      return (data as Campaign[]) || [];
     },
     staleTime: STALE_TIME * 5, // Cache campaigns longer
   });
@@ -586,7 +598,7 @@ export function useRecentLeads(campaignSlug: string, limit: number = 10) {
         throw error;
       }
 
-      return data || [];
+      return (data as Lead[]) || [];
     },
     staleTime: STALE_TIME,
   });
