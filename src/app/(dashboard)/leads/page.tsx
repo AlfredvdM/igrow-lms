@@ -228,7 +228,7 @@ export default function LeadsPage() {
               placeholder="Name, email, or phone..."
               icon={SearchLg}
               value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
+              onChange={(value) => handleSearchChange(value)}
             />
           </div>
 
