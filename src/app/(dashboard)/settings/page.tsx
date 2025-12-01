@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect, Suspense } from "react";
-import { useUser } from "@clerk/nextjs";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect, Suspense, useContext } from "react";
+import { useSearchParams } from "next/navigation";
 import { OverlayTriggerStateContext } from "react-aria-components";
 
 import { Tabs, TabList, TabPanel } from "@/components/application/tabs/tabs";
@@ -12,7 +11,8 @@ import { Label } from "@/components/base/input/label";
 import { TextArea } from "@/components/base/textarea/textarea";
 import { DialogTrigger, ModalOverlay, Modal, Dialog } from "@/components/application/modals/modal";
 import { Trash03, Lock01 } from "@untitledui/icons";
-import { useContext } from "react";
+import { useUser, useAuth } from "@/providers/auth-provider";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 
 // Password Change Modal Content Component
 function PasswordChangeModalContent({
@@ -184,9 +184,9 @@ function DeleteAccountModalContent() {
 }
 
 function SettingsContent() {
-    const { user, isLoaded } = useUser();
+    const { firstName, lastName, email, isLoaded, user } = useUser();
+    const { refreshSession } = useAuth();
     const searchParams = useSearchParams();
-    const router = useRouter();
     const [selectedTab, setSelectedTab] = useState("profile");
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -194,6 +194,19 @@ function SettingsContent() {
     const [passwordError, setPasswordError] = useState<string | null>(null);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+    // Profile form state
+    const [profileFirstName, setProfileFirstName] = useState(firstName);
+    const [profileLastName, setProfileLastName] = useState(lastName);
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+    const [profileSuccess, setProfileSuccess] = useState(false);
+    const [profileError, setProfileError] = useState<string | null>(null);
+
+    // Update profile form when user data loads
+    useEffect(() => {
+        setProfileFirstName(firstName);
+        setProfileLastName(lastName);
+    }, [firstName, lastName]);
 
     // Update selected tab from URL parameter
     useEffect(() => {
@@ -226,11 +239,29 @@ function SettingsContent() {
         setIsChangingPassword(true);
 
         try {
-            // Update password using Clerk
-            await user?.updatePassword({
-                currentPassword,
-                newPassword,
+            const supabase = createSupabaseBrowserClient();
+
+            // First, verify current password by attempting to sign in
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: currentPassword,
             });
+
+            if (signInError) {
+                setPasswordError('Current password is incorrect.');
+                setIsChangingPassword(false);
+                return;
+            }
+
+            // Now update to new password
+            const { error: updateError } = await supabase.auth.updateUser({
+                password: newPassword,
+            });
+
+            if (updateError) {
+                setPasswordError(updateError.message);
+                return;
+            }
 
             setPasswordSuccess(true);
             setCurrentPassword('');
@@ -243,15 +274,45 @@ function SettingsContent() {
                 setPasswordSuccess(false);
                 setPasswordError(null);
             }, 2000);
-        } catch (err: unknown) {
-            const clerkError = err as { errors?: Array<{ message: string; longMessage?: string }> };
-            if (clerkError.errors && clerkError.errors.length > 0) {
-                setPasswordError(clerkError.errors[0].longMessage || clerkError.errors[0].message);
-            } else {
-                setPasswordError('Failed to update password. Please try again.');
-            }
+        } catch {
+            setPasswordError('Failed to update password. Please try again.');
         } finally {
             setIsChangingPassword(false);
+        }
+    };
+
+    const handleSaveProfile = async () => {
+        setProfileError(null);
+        setProfileSuccess(false);
+        setIsSavingProfile(true);
+
+        try {
+            const supabase = createSupabaseBrowserClient();
+
+            const { error } = await supabase.auth.updateUser({
+                data: {
+                    first_name: profileFirstName,
+                    last_name: profileLastName,
+                },
+            });
+
+            if (error) {
+                setProfileError(error.message);
+                return;
+            }
+
+            // Refresh session to get updated user data
+            await refreshSession();
+            setProfileSuccess(true);
+
+            // Hide success message after 3 seconds
+            setTimeout(() => {
+                setProfileSuccess(false);
+            }, 3000);
+        } catch {
+            setProfileError('Failed to update profile. Please try again.');
+        } finally {
+            setIsSavingProfile(false);
         }
     };
 
@@ -286,13 +347,28 @@ function SettingsContent() {
                 {/* Profile Tab */}
                 <TabPanel id="profile">
                     <div className="mt-6 max-w-2xl space-y-8">
+                        {/* Success Message */}
+                        {profileSuccess && (
+                            <div className="rounded-lg border border-success-300 bg-success-50 p-4">
+                                <p className="text-sm text-success-700">Profile updated successfully!</p>
+                            </div>
+                        )}
+
+                        {/* Error Message */}
+                        {profileError && (
+                            <div className="rounded-lg border border-error-300 bg-error-50 p-4">
+                                <p className="text-sm text-error-700">{profileError}</p>
+                            </div>
+                        )}
+
                         {/* Name Fields */}
                         <div className="grid gap-6 sm:grid-cols-2">
                             <div>
                                 <Label htmlFor="firstName">First Name</Label>
                                 <Input
                                     id="firstName"
-                                    defaultValue={user?.firstName || ''}
+                                    value={profileFirstName}
+                                    onChange={setProfileFirstName}
                                     placeholder="Enter your first name"
                                 />
                             </div>
@@ -300,7 +376,8 @@ function SettingsContent() {
                                 <Label htmlFor="lastName">Last Name</Label>
                                 <Input
                                     id="lastName"
-                                    defaultValue={user?.lastName || ''}
+                                    value={profileLastName}
+                                    onChange={setProfileLastName}
                                     placeholder="Enter your last name"
                                 />
                             </div>
@@ -312,7 +389,7 @@ function SettingsContent() {
                             <Input
                                 id="email"
                                 type="email"
-                                defaultValue={user?.primaryEmailAddress?.emailAddress || ''}
+                                defaultValue={email}
                                 isDisabled
                                 className="bg-disabled_subtle"
                             />
@@ -332,8 +409,25 @@ function SettingsContent() {
 
                         {/* Save Button */}
                         <div className="flex justify-end gap-3 border-t border-border-secondary pt-6">
-                            <Button size="md" color="secondary">Cancel</Button>
-                            <Button size="md" color="primary">Save changes</Button>
+                            <Button
+                                size="md"
+                                color="secondary"
+                                onClick={() => {
+                                    setProfileFirstName(firstName);
+                                    setProfileLastName(lastName);
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                size="md"
+                                color="primary"
+                                onClick={handleSaveProfile}
+                                isLoading={isSavingProfile}
+                                isDisabled={isSavingProfile}
+                            >
+                                Save changes
+                            </Button>
                         </div>
                     </div>
                 </TabPanel>

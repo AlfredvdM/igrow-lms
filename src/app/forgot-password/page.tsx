@@ -1,16 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { useSignIn } from '@clerk/nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail01, ArrowLeft } from '@untitledui/icons';
 import { Button } from '@/components/base/buttons/button';
 import { Input } from '@/components/base/input/input';
+import { createSupabaseBrowserClient } from '@/lib/supabase';
+
+// Allowed email domains for password reset
+const ALLOWED_DOMAINS = ['gasmarketing.co.za', 'igrow.co.za'];
+
+const isAllowedEmailDomain = (email: string): boolean => {
+  const domain = email.split('@')[1]?.toLowerCase();
+  return ALLOWED_DOMAINS.includes(domain);
+};
 
 export default function ForgotPasswordPage() {
-  const { signIn, isLoaded } = useSignIn();
-
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,26 +24,32 @@ export default function ForgotPasswordPage() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoaded || !signIn) return;
+
+    // Validate email domain
+    if (!isAllowedEmailDomain(email)) {
+      setError('Access restricted to @gasmarketing.co.za and @igrow.co.za email addresses only.');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
 
     try {
-      await signIn.create({
-        strategy: 'reset_password_email_code',
-        identifier: email,
+      const supabase = createSupabaseBrowserClient();
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
       });
 
-      setSuccessMessage('Check your email for a password reset link.');
-    } catch (err: unknown) {
-      const clerkError = err as { errors?: Array<{ message: string; longMessage?: string }> };
-      if (clerkError.errors && clerkError.errors.length > 0) {
-        setError(clerkError.errors[0].longMessage || clerkError.errors[0].message);
-      } else {
-        setError('An unexpected error occurred. Please try again.');
+      if (error) {
+        setError(error.message);
+        return;
       }
+
+      setSuccessMessage('Check your email for a password reset link.');
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -104,7 +116,7 @@ export default function ForgotPasswordPage() {
               size="lg"
               className="w-full"
               isLoading={isLoading}
-              isDisabled={!isLoaded || isLoading}
+              isDisabled={isLoading}
             >
               Reset password
             </Button>

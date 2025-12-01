@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSignIn, useAuth } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail01, Lock01 } from '@untitledui/icons';
 import { Button } from '@/components/base/buttons/button';
-import { SocialButton } from '@/components/base/buttons/social-button';
 import { Input } from '@/components/base/input/input';
 import { DialogTrigger, ModalOverlay, Modal, Dialog } from '@/components/application/modals/modal';
 import { ForgotPasswordModalContent } from '@/components/auth/forgot-password-modal';
+import { createSupabaseBrowserClient } from '@/lib/supabase';
+import { useAuth } from '@/providers/auth-provider';
 
 // Allowed email domains for sign-in
 const ALLOWED_DOMAINS = ['gasmarketing.co.za', 'igrow.co.za'];
@@ -21,28 +21,36 @@ const isAllowedEmailDomain = (email: string): boolean => {
 };
 
 export default function SignInPage() {
-  const { signIn, setActive, isLoaded } = useSignIn();
-  const { isSignedIn } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user, isLoading: authLoading } = useAuth();
+  const isVerified = searchParams?.get('verified') === 'true';
+  const authError = searchParams?.get('error');
 
   // Redirect if already signed in
   useEffect(() => {
-    if (isSignedIn) {
+    if (!authLoading && user) {
       router.push('/insights');
     }
-  }, [isSignedIn, router]);
+  }, [user, authLoading, router]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showVerifiedMessage, setShowVerifiedMessage] = useState(isVerified);
+
+  // Handle auth callback errors
+  useEffect(() => {
+    if (authError === 'auth_callback_error') {
+      setError('Authentication failed. Please try again.');
+    }
+  }, [authError]);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoaded || !signIn) return;
 
-    // Validate email domain (optional for sign-in, mainly for better UX)
+    // Validate email domain
     if (email && !isAllowedEmailDomain(email)) {
       setError('Access restricted to @gasmarketing.co.za and @igrow.co.za email addresses only.');
       return;
@@ -50,60 +58,47 @@ export default function SignInPage() {
 
     setIsLoading(true);
     setError(null);
+    setShowVerifiedMessage(false);
 
     try {
-      const result = await signIn.create({
-        identifier: email,
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
         password,
       });
 
-      if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId });
-        router.push('/insights');
-      } else {
-        setError('Sign in failed. Please try again.');
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please try again.');
+        } else if (error.message.includes('Email not confirmed')) {
+          setError('Please verify your email before signing in. Check your inbox for a verification link.');
+        } else {
+          setError(error.message);
+        }
+        return;
       }
-    } catch (err: unknown) {
-      const clerkError = err as { errors?: Array<{ message: string; longMessage?: string }> };
-      if (clerkError.errors && clerkError.errors.length > 0) {
-        setError(clerkError.errors[0].longMessage || clerkError.errors[0].message);
-      } else {
-        setError('An unexpected error occurred. Please try again.');
-      }
+
+      // Successful sign-in - router will handle redirect via middleware
+      router.push('/insights');
+      router.refresh();
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    if (!isLoaded || !signIn) return;
-
-    setIsGoogleLoading(true);
-    setError(null);
-
-    try {
-      await signIn.authenticateWithRedirect({
-        strategy: 'oauth_google',
-        redirectUrl: '/sso-callback',
-        redirectUrlComplete: '/insights',
-      });
-    } catch (err: unknown) {
-      const clerkError = err as { errors?: Array<{ message: string; longMessage?: string }> };
-      if (clerkError.errors && clerkError.errors.length > 0) {
-        const errorMessage = clerkError.errors[0].longMessage || clerkError.errors[0].message;
-
-        // Check for domain restriction errors from Clerk
-        if (errorMessage.toLowerCase().includes('not allowed') || errorMessage.toLowerCase().includes('allowlist')) {
-          setError('Access restricted to @gasmarketing.co.za and @igrow.co.za email addresses only.');
-        } else {
-          setError(errorMessage);
-        }
-      } else {
-        setError('Failed to sign in with Google. Please try again.');
-      }
-      setIsGoogleLoading(false);
-    }
-  };
+  // Show loading while checking auth state
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand-600 border-t-transparent mx-auto" />
+          <p className="mt-4 text-sm font-medium text-fg-primary">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -132,36 +127,19 @@ export default function SignInPage() {
             </p>
           </div>
 
+          {/* Success message after email verification */}
+          {showVerifiedMessage && (
+            <div className="mb-6 rounded-lg border border-success-300 bg-success-50 p-4">
+              <p className="text-sm text-success-700">Email verified successfully! Please sign in to continue.</p>
+            </div>
+          )}
+
           {/* Error message */}
           {error && (
             <div className="mb-6 rounded-lg border border-error-300 bg-error-50 p-4">
               <p className="text-sm text-error-700">{error}</p>
             </div>
           )}
-
-          {/* Google Sign In */}
-          <div className="mb-6">
-            <SocialButton
-              social="google"
-              theme="gray"
-              size="lg"
-              className="w-full"
-              onClick={handleGoogleSignIn}
-              disabled={isGoogleLoading || !isLoaded}
-            >
-              {isGoogleLoading ? 'Signing in...' : 'Sign in with Google'}
-            </SocialButton>
-          </div>
-
-          {/* Divider */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border-secondary" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-bg-primary px-3 text-fg-quaternary">or</span>
-            </div>
-          </div>
 
           {/* Email/Password Form */}
           <form onSubmit={handleEmailSignIn} className="space-y-5">
@@ -213,7 +191,7 @@ export default function SignInPage() {
               size="lg"
               className="w-full"
               isLoading={isLoading}
-              isDisabled={!isLoaded || isLoading}
+              isDisabled={isLoading}
             >
               Sign in
             </Button>

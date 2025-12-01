@@ -1,15 +1,15 @@
 "use client";
 
 import type { FC, HTMLAttributes } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { Placement } from "@react-types/overlays";
 import { ChevronSelectorVertical, LogOut01, User01 } from "@untitledui/icons";
 import { useFocusManager } from "react-aria";
 import type { DialogProps as AriaDialogProps } from "react-aria-components";
 import { Button as AriaButton, Dialog as AriaDialog, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
-import { useUser, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
+import { useUser, useAuth } from "@/providers/auth-provider";
 import { cx } from "@/utils/cx";
 
 const settingsTabs = [
@@ -23,11 +23,11 @@ export const NavAccountMenu = ({
 }: AriaDialogProps & { className?: string }) => {
     const focusManager = useFocusManager();
     const dialogRef = useRef<HTMLDivElement>(null);
-    const { signOut } = useClerk();
+    const { signOut } = useAuth();
     const router = useRouter();
 
     const handleSignOut = () => {
-        signOut({ redirectUrl: '/sign-in' });
+        signOut();
     };
 
     const handleTabClick = (tabId: string) => {
@@ -125,16 +125,10 @@ export const NavAccountCard = ({
 }) => {
     const triggerRef = useRef<HTMLDivElement>(null);
     const isDesktop = useBreakpoint("lg");
-    const { user, isLoaded } = useUser();
+    const { firstName, lastName, email, isLoaded } = useUser();
 
-    // Use Clerk user data if available, otherwise fallback to placeholder
-    const currentUser = isLoaded && user ? {
-        name: user.fullName || user.firstName || 'User',
-        email: user.primaryEmailAddress?.emailAddress || '',
-    } : {
-        name: 'User',
-        email: '',
-    };
+    // Build display name from first and last name
+    const displayName = [firstName, lastName].filter(Boolean).join(' ') || 'User';
 
     if (!isLoaded) {
         return (
@@ -170,8 +164,8 @@ export const NavAccountCard = ({
 
             {/* User Info */}
             <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-gray-900 truncate">{currentUser.name}</p>
-                <p className="text-xs text-gray-600 truncate">{currentUser.email}</p>
+                <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+                <p className="text-xs text-gray-600 truncate">{email}</p>
             </div>
 
             <div className="absolute top-1.5 right-1.5">

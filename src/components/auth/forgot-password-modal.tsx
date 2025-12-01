@@ -1,14 +1,21 @@
 'use client';
 
 import { useState, useContext } from 'react';
-import { useSignIn } from '@clerk/nextjs';
 import { OverlayTriggerStateContext } from 'react-aria-components';
 import { Mail01 } from '@untitledui/icons';
 import { Button } from '@/components/base/buttons/button';
 import { Input } from '@/components/base/input/input';
+import { createSupabaseBrowserClient } from '@/lib/supabase';
+
+// Allowed email domains for password reset
+const ALLOWED_DOMAINS = ['gasmarketing.co.za', 'igrow.co.za'];
+
+const isAllowedEmailDomain = (email: string): boolean => {
+    const domain = email.split('@')[1]?.toLowerCase();
+    return ALLOWED_DOMAINS.includes(domain);
+};
 
 export function ForgotPasswordModalContent() {
-    const { signIn, isLoaded } = useSignIn();
     const state = useContext(OverlayTriggerStateContext);
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -23,17 +30,28 @@ export function ForgotPasswordModalContent() {
 
     const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!isLoaded || !signIn) return;
+
+        // Validate email domain
+        if (!isAllowedEmailDomain(email)) {
+            setError('Access restricted to @gasmarketing.co.za and @igrow.co.za email addresses only.');
+            return;
+        }
 
         setIsLoading(true);
         setError(null);
         setSuccessMessage(null);
 
         try {
-            await signIn.create({
-                strategy: 'reset_password_email_code',
-                identifier: email,
+            const supabase = createSupabaseBrowserClient();
+
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/auth/reset-password`,
             });
+
+            if (error) {
+                setError(error.message);
+                return;
+            }
 
             setSuccessMessage('Check your email for reset instructions.');
 
@@ -45,13 +63,8 @@ export function ForgotPasswordModalContent() {
                 setSuccessMessage(null);
                 setError(null);
             }, 3000);
-        } catch (err: unknown) {
-            const clerkError = err as { errors?: Array<{ message: string; longMessage?: string }> };
-            if (clerkError.errors && clerkError.errors.length > 0) {
-                setError(clerkError.errors[0].longMessage || clerkError.errors[0].message);
-            } else {
-                setError('An unexpected error occurred. Please try again.');
-            }
+        } catch {
+            setError('An unexpected error occurred. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -99,22 +112,21 @@ export function ForgotPasswordModalContent() {
 
                 {/* Modal Footer */}
                 <div className="flex justify-end gap-3 border-t border-border-secondary pt-4">
-                    <form method="dialog" className="contents">
-                        <Button
-                            type="submit"
-                            size="md"
-                            color="secondary"
-                            isDisabled={isLoading}
-                        >
-                            Cancel
-                        </Button>
-                    </form>
+                    <Button
+                        type="button"
+                        size="md"
+                        color="secondary"
+                        isDisabled={isLoading}
+                        onClick={close}
+                    >
+                        Cancel
+                    </Button>
                     <Button
                         type="submit"
                         size="md"
                         color="primary"
                         isLoading={isLoading}
-                        isDisabled={!isLoaded || isLoading}
+                        isDisabled={isLoading}
                     >
                         Reset password
                     </Button>

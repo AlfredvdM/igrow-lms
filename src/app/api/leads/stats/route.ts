@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { fetchLeadsFromSheet } from '@/lib/google-sheets';
 import {
   calculateLeadStats,
@@ -16,8 +16,9 @@ import {
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const { userId } = await auth();
-    if (!userId) {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

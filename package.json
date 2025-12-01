@@ -8,8 +8,8 @@
         "start": "next start"
     },
     "dependencies": {
-        "@clerk/nextjs": "^6.35.0",
         "@internationalized/date": "^3.10.0",
+        "@supabase/ssr": "^0.8.0",
         "@supabase/supabase-js": "^2.86.0",
         "@tailwindcss/postcss": "^4.1.11",
         "@tailwindcss/typography": "^0.5.16",

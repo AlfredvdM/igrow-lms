@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
+import { AuthProvider } from "@/providers/auth-provider";
 import { RouteProvider } from "@/providers/router-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import "@/styles/globals.css";
@@ -35,13 +35,13 @@ export default function RootLayout({
     return (
         <html lang="en" className="light-mode">
             <body className={cx(plusJakartaSans.variable, "bg-primary antialiased")}>
-                <ClerkProvider>
+                <AuthProvider>
                     <QueryProvider>
                         <RouteProvider>
                             {children}
                         </RouteProvider>
                     </QueryProvider>
-                </ClerkProvider>
+                </AuthProvider>
             </body>
         </html>
     );

@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation';
-import { auth } from '@clerk/nextjs/server';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export default async function RootPage() {
-  const { userId } = await auth();
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (userId) {
+  if (user) {
     // User is authenticated, redirect to insights
     redirect('/insights');
   } else {
