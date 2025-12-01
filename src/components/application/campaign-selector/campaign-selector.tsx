@@ -73,12 +73,12 @@ export function CampaignSelector({
                 <>
                     {/* Backdrop */}
                     <div
-                        className="fixed inset-0 z-40"
+                        className="fixed inset-0 z-[999]"
                         onClick={() => setIsOpen(false)}
                     />
 
                     {/* Dropdown menu */}
-                    <div className="absolute top-full left-0 z-50 mt-2 w-full overflow-hidden rounded-lg border border-border-secondary bg-bg-primary shadow-lg">
+                    <div className="absolute top-full left-0 z-[1000] mt-2 w-full overflow-hidden rounded-lg border border-border-secondary bg-bg-primary shadow-lg">
                         {campaigns.map((campaign) => (
                             <button
                                 key={campaign.id}
