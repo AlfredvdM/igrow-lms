@@ -55,7 +55,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Handle specific auth events
         if (event === 'SIGNED_OUT') {
           router.push('/sign-in');
-        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        } else if (event === 'TOKEN_REFRESHED') {
+          // Only refresh on token refresh, not on SIGNED_IN
+          // Let sign-in page control its own redirect to avoid race conditions
           router.refresh();
         }
       }

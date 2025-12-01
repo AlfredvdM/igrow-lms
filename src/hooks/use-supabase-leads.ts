@@ -5,8 +5,13 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { createSupabaseBrowserClient } from '@/lib/supabase';
 import type { Lead, Campaign, ApartmentPreference, PreferredContact, BestOutreachTime } from '@/types/database';
+
+// Lazy getter to avoid creating client at module load time
+function getSupabase() {
+  return createSupabaseBrowserClient();
+}
 
 const STALE_TIME = 60 * 1000; // 60 seconds
 
@@ -18,7 +23,7 @@ export type DateRangeFilter = 'all' | 'today' | 'last7days' | 'last30days' | 'th
 // ============================================================================
 
 async function getCampaignBySlug(slug: string): Promise<Campaign | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('campaigns')
     .select('*')
     .eq('slug', slug)
@@ -99,7 +104,7 @@ export function useLeads(campaignSlug: string, options: UseLeadsOptions = {}) {
       }
 
       // Build the query
-      let query = supabase
+      let query = getSupabase()
         .from('leads')
         .select('*', { count: 'exact' })
         .eq('campaign_id', campaign.id);
@@ -182,7 +187,7 @@ export function useLeadStats(campaignSlug: string) {
       }
 
       // Get all leads for this campaign
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('leads')
         .select('*')
         .eq('campaign_id', campaign.id);
@@ -267,7 +272,7 @@ export function useLeadTimeline(campaignSlug: string, days: number | null = 30) 
       }
 
       const endDate = new Date();
-      let query = supabase
+      let query = getSupabase()
         .from('leads')
         .select('submitted_at')
         .eq('campaign_id', campaign.id)
@@ -343,7 +348,7 @@ export function useApartmentBreakdown(campaignSlug: string) {
         return [];
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('leads')
         .select('apartment_preference')
         .eq('campaign_id', campaign.id);
@@ -397,7 +402,7 @@ export function useContactMethodBreakdown(campaignSlug: string) {
         return [];
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('leads')
         .select('preferred_contact')
         .eq('campaign_id', campaign.id);
@@ -451,7 +456,7 @@ export function useEmploymentBreakdown(campaignSlug: string) {
         return [];
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('leads')
         .select('employment_status')
         .eq('campaign_id', campaign.id);
@@ -505,7 +510,7 @@ export function useLeadSourceBreakdown(campaignSlug: string) {
         return [];
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('leads')
         .select('lead_source')
         .eq('campaign_id', campaign.id);
@@ -557,7 +562,7 @@ export function useCampaigns() {
   return useQuery<Campaign[]>({
     queryKey: ['campaigns'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('campaigns')
         .select('*')
         .order('name');
@@ -586,7 +591,7 @@ export function useRecentLeads(campaignSlug: string, limit: number = 10) {
         return [];
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('leads')
         .select('*')
         .eq('campaign_id', campaign.id)

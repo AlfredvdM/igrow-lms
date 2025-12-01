@@ -30,6 +30,7 @@ export function ForgotPasswordModalContent() {
 
     const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
+        e.stopPropagation();
 
         // Validate email domain
         if (!isAllowedEmailDomain(email)) {

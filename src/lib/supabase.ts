@@ -4,7 +4,7 @@
  */
 
 import { createBrowserClient } from '@supabase/ssr';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 
 // Environment variables
@@ -13,19 +13,17 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export type TypedSupabaseClient = SupabaseClient<Database>;
 
+// Singleton browser client instance
+let browserClient: ReturnType<typeof createBrowserClient<Database>> | null = null;
+
 /**
  * Create a browser client for client components
  * This handles auth state and cookies automatically
+ * Uses singleton pattern to avoid multiple GoTrueClient instances
  */
 export function createSupabaseBrowserClient() {
-  return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
+  if (!browserClient) {
+    browserClient = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
+  }
+  return browserClient;
 }
-
-/**
- * Legacy browser client for backward compatibility
- * Prefer createSupabaseBrowserClient() for new code
- */
-export const supabase: TypedSupabaseClient = createClient<Database>(
-  supabaseUrl,
-  supabaseAnonKey
-);

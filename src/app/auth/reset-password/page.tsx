@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Lock01 } from '@untitledui/icons';
@@ -11,26 +11,65 @@ import { createSupabaseBrowserClient } from '@/lib/supabase';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
-  // Check if we have a valid session from the reset link
+  // Check for URL error params (e.g., expired token)
   useEffect(() => {
-    const checkSession = async () => {
-      const supabase = createSupabaseBrowserClient();
-      const { data: { session } } = await supabase.auth.getSession();
+    const errorCode = searchParams?.get('error_code');
+    const errorDescription = searchParams?.get('error_description');
 
-      // If no session and no hash params, redirect to sign-in
-      if (!session && !window.location.hash) {
-        router.push('/sign-in');
+    if (errorCode === 'otp_expired' || errorDescription?.includes('expired')) {
+      setLinkError('This password reset link has expired. Please request a new one.');
+      setIsReady(true); // Show error UI instead of loading
+      return;
+    }
+
+    if (errorCode || errorDescription) {
+      setLinkError(errorDescription?.replace(/\+/g, ' ') || 'Invalid reset link. Please request a new one.');
+      setIsReady(true);
+      return;
+    }
+  }, [searchParams]);
+
+  // Wait for Supabase to process the recovery token from the email link
+  useEffect(() => {
+    // Skip if we already have a link error
+    if (linkError) return;
+
+    const supabase = createSupabaseBrowserClient();
+
+    // Listen for auth state changes - Supabase will process the hash fragment
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        // Token was valid, user can now reset their password
+        setIsReady(true);
+      } else if (event === 'SIGNED_IN' && session) {
+        // User is signed in (possibly from recovery token)
+        setIsReady(true);
+      } else if (event === 'INITIAL_SESSION') {
+        // Initial session check complete
+        if (session) {
+          setIsReady(true);
+        } else if (!window.location.hash && !searchParams?.get('error')) {
+          // No session, no hash params, and no error params - redirect to sign-in
+          router.push('/sign-in');
+        }
+        // If there's a hash but no session yet, wait for PASSWORD_RECOVERY event
       }
-    };
+    });
 
-    checkSession();
-  }, [router]);
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router, linkError, searchParams]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +114,18 @@ export default function ResetPasswordPage() {
     }
   };
 
+  // Show loading state while waiting for token processing
+  if (!isReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand-600 border-t-transparent mx-auto" />
+          <p className="mt-4 text-sm font-medium text-fg-primary">Verifying reset link...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen">
       {/* Left side - Reset password form */}
@@ -93,7 +144,42 @@ export default function ResetPasswordPage() {
 
         {/* Form container */}
         <div className="mx-auto w-full max-w-[360px]">
-          {!success ? (
+          {linkError ? (
+            <>
+              <div className="mb-8 text-center">
+                <h1 className="text-display-sm font-semibold text-fg-primary lg:text-display-md">
+                  Link expired
+                </h1>
+                <p className="mt-3 text-md text-fg-tertiary">
+                  {linkError}
+                </p>
+              </div>
+
+              <div className="mb-6 rounded-lg border border-warning-300 bg-warning-50 p-4">
+                <p className="text-sm text-warning-700">
+                  Password reset links expire after 1 hour for security reasons.
+                </p>
+              </div>
+
+              <Link
+                href="/sign-in"
+                className="block w-full"
+              >
+                <Button
+                  type="button"
+                  color="primary"
+                  size="lg"
+                  className="w-full"
+                >
+                  Back to sign in
+                </Button>
+              </Link>
+
+              <p className="mt-4 text-center text-sm text-fg-tertiary">
+                Click &quot;Forgot password?&quot; on the sign-in page to request a new link.
+              </p>
+            </>
+          ) : !success ? (
             <>
               <div className="mb-8 text-center">
                 <h1 className="text-display-sm font-semibold text-fg-primary lg:text-display-md">

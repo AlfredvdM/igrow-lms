@@ -170,7 +170,10 @@ export default function SignInPage() {
 
             <div className="flex items-center justify-end">
               <DialogTrigger>
-                <AriaButton className="text-sm font-semibold text-fg-brand-primary hover:text-fg-brand-primary_hover cursor-pointer">
+                <AriaButton
+                  className="text-sm font-semibold text-fg-brand-primary hover:text-fg-brand-primary_hover cursor-pointer"
+                  onPress={(e) => e.continuePropagation()}
+                >
                   Forgot password?
                 </AriaButton>
                 <ModalOverlay isDismissable>
