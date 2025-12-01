@@ -1,7 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { ChevronDown } from "@untitledui/icons";
+import {
+    Button as AriaButton,
+    Menu as AriaMenu,
+    MenuItem as AriaMenuItem,
+    MenuTrigger as AriaMenuTrigger,
+    Popover as AriaPopover,
+} from "react-aria-components";
 import { cx } from "@/utils/cx";
 
 export type Campaign = {
@@ -32,23 +38,18 @@ export function CampaignSelector({
     selectedCampaignId = "the-aura",
     onCampaignChange,
 }: CampaignSelectorProps) {
-    const [isOpen, setIsOpen] = useState(false);
     const selectedCampaign = campaigns.find((c) => c.id === selectedCampaignId) || campaigns[0];
 
-    const handleSelect = (campaignId: string) => {
-        onCampaignChange?.(campaignId);
-        setIsOpen(false);
-    };
-
     return (
-        <div className="relative">
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={cx(
-                    "flex w-full items-center justify-between gap-2 rounded-lg border border-border-secondary bg-bg-primary px-3 py-2 text-sm font-semibold text-fg-primary shadow-xs transition-colors",
-                    "hover:bg-bg-primary_hover focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2",
-                    isOpen && "ring-2 ring-brand-500"
-                )}
+        <AriaMenuTrigger>
+            <AriaButton
+                className={(state) =>
+                    cx(
+                        "flex w-full items-center justify-between gap-2 rounded-lg border border-border-secondary bg-bg-primary px-3 py-2 text-sm font-semibold text-fg-primary shadow-xs transition-colors",
+                        "hover:bg-bg-primary_hover focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2",
+                        state.isPressed && "ring-2 ring-brand-500"
+                    )
+                }
             >
                 <div className="flex items-center gap-2">
                     <div
@@ -63,53 +64,61 @@ export function CampaignSelector({
                 </div>
                 <ChevronDown
                     className={cx(
-                        "size-4 text-fg-quaternary transition-transform",
-                        isOpen && "rotate-180"
+                        "size-4 text-fg-quaternary transition-transform"
                     )}
                 />
-            </button>
+            </AriaButton>
 
-            {isOpen && (
-                <>
-                    {/* Backdrop */}
-                    <div
-                        className="fixed inset-0 z-[999]"
-                        onClick={() => setIsOpen(false)}
-                    />
-
-                    {/* Dropdown menu */}
-                    <div className="absolute top-full left-0 z-[1000] mt-2 w-full overflow-hidden rounded-lg border border-border-secondary bg-bg-primary shadow-lg">
-                        {campaigns.map((campaign) => (
-                            <button
-                                key={campaign.id}
-                                onClick={() => handleSelect(campaign.id)}
-                                className={cx(
-                                    "flex w-full items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium transition-colors",
-                                    "hover:bg-bg-primary_hover focus:outline-none",
+            <AriaPopover
+                placement="bottom"
+                offset={8}
+                className={(state) =>
+                    cx(
+                        "w-[--trigger-width] rounded-lg border border-border-secondary bg-bg-primary shadow-lg z-50 overflow-hidden origin-(--trigger-anchor-point) will-change-transform",
+                        state.isEntering &&
+                            "duration-150 ease-out animate-in fade-in slide-in-from-top-0.5",
+                        state.isExiting &&
+                            "duration-100 ease-in animate-out fade-out slide-out-to-top-0.5"
+                    )
+                }
+            >
+                <AriaMenu
+                    onAction={(key) => onCampaignChange?.(key.toString())}
+                    className="outline-none"
+                >
+                    {campaigns.map((campaign) => (
+                        <AriaMenuItem
+                            key={campaign.id}
+                            id={campaign.id}
+                            className={(state) =>
+                                cx(
+                                    "flex w-full items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer outline-none",
+                                    "hover:bg-bg-primary_hover",
+                                    state.isFocused && "bg-bg-primary_hover",
                                     campaign.id === selectedCampaignId
                                         ? "bg-bg-brand_subtle text-fg-brand-primary"
                                         : "text-fg-primary"
-                                )}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <div
-                                        className={cx(
-                                            "size-2 rounded-full",
-                                            campaign.status === "active"
-                                                ? "bg-fg-success-secondary"
-                                                : "bg-fg-quaternary"
-                                        )}
-                                    />
-                                    <span>{campaign.name}</span>
-                                </div>
-                                {campaign.status === "inactive" && (
-                                    <span className="text-xs text-fg-quaternary">Inactive</span>
-                                )}
-                            </button>
-                        ))}
-                    </div>
-                </>
-            )}
-        </div>
+                                )
+                            }
+                        >
+                            <div className="flex items-center gap-2">
+                                <div
+                                    className={cx(
+                                        "size-2 rounded-full",
+                                        campaign.status === "active"
+                                            ? "bg-fg-success-secondary"
+                                            : "bg-fg-quaternary"
+                                    )}
+                                />
+                                <span>{campaign.name}</span>
+                            </div>
+                            {campaign.status === "inactive" && (
+                                <span className="text-xs text-fg-quaternary">Inactive</span>
+                            )}
+                        </AriaMenuItem>
+                    ))}
+                </AriaMenu>
+            </AriaPopover>
+        </AriaMenuTrigger>
     );
 }

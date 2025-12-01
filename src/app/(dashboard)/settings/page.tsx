@@ -311,7 +311,7 @@ function SettingsContent() {
                                         >
                                             Change password
                                         </Button>
-                                        <ModalOverlay>
+                                        <ModalOverlay isDismissable>
                                             <Modal>
                                                 <Dialog className="w-full max-w-lg">
                                                     <PasswordChangeModalContent
@@ -351,7 +351,7 @@ function SettingsContent() {
                                         >
                                             Delete account
                                         </Button>
-                                        <ModalOverlay>
+                                        <ModalOverlay isDismissable>
                                             <Modal>
                                                 <Dialog className="w-full max-w-lg">
                                                     <div className="rounded-xl bg-primary p-6 shadow-xl ring-1 ring-secondary ring-inset">
@@ -382,9 +382,11 @@ function SettingsContent() {
 
                                                         {/* Modal Footer */}
                                                         <div className="mt-6 flex justify-end gap-3 border-t border-border-secondary pt-4">
-                                                            <Button size="md" color="secondary">
-                                                                Cancel
-                                                            </Button>
+                                                            <form method="dialog" className="contents">
+                                                                <Button type="submit" size="md" color="secondary">
+                                                                    Cancel
+                                                                </Button>
+                                                            </form>
                                                             <Button size="md" color="primary" className="!bg-error-600 hover:!bg-error-700">
                                                                 Yes, delete my account
                                                             </Button>

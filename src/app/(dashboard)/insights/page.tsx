@@ -219,7 +219,7 @@ export default function InsightsPage() {
             Analytics and performance metrics for your campaigns.
           </p>
         </div>
-        <div className="relative z-50 w-full lg:w-64">
+        <div className="w-full lg:w-64">
           <CampaignSelector
             selectedCampaignId={selectedCampaignId}
             onCampaignChange={setSelectedCampaignId}

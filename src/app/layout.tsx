@@ -3,7 +3,6 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { RouteProvider } from "@/providers/router-provider";
 import { QueryProvider } from "@/providers/query-provider";
-import { Theme } from "@/providers/theme";
 import "@/styles/globals.css";
 import { cx } from "@/utils/cx";
 
@@ -25,7 +24,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
     themeColor: "#a63346",
-    colorScheme: "light dark",
+    colorScheme: "light",
 };
 
 export default function RootLayout({
@@ -34,12 +33,12 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" suppressHydrationWarning>
+        <html lang="en" className="light-mode">
             <body className={cx(plusJakartaSans.variable, "bg-primary antialiased")}>
                 <ClerkProvider>
                     <QueryProvider>
                         <RouteProvider>
-                            <Theme>{children}</Theme>
+                            {children}
                         </RouteProvider>
                     </QueryProvider>
                 </ClerkProvider>
