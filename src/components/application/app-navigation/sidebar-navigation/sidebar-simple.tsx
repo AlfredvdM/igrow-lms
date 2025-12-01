@@ -5,8 +5,7 @@ import Image from "next/image";
 import { cx } from "@/utils/cx";
 import { MobileNavigationHeader } from "../base-components/mobile-header";
 import { NavAccountCard } from "../base-components/nav-account-card";
-import { NavItemBase } from "../base-components/nav-item";
-import { NavList } from "../base-components/nav-list";
+import { NavListBrand } from "../base-components/nav-list-brand";
 import type { NavItemType } from "../config";
 
 interface SidebarNavigationProps {
@@ -45,11 +44,14 @@ export const SidebarNavigationSimple = ({
             style={
                 {
                     "--width": `${MAIN_SIDEBAR_WIDTH}px`,
+                    background: "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%)",
+                    backdropFilter: "blur(12px)",
+                    boxShadow: 'inset -1px 0 0 0 rgba(182, 54, 75, 0.05)',
                 } as React.CSSProperties
             }
             className={cx(
-                "flex h-full w-full max-w-full flex-col justify-between overflow-auto bg-primary pt-4 lg:w-(--width) lg:pt-6",
-                !hideBorder && "border-secondary md:border-r",
+                "flex h-full w-full max-w-full flex-col justify-between overflow-auto pt-4 lg:w-(--width) lg:pt-6",
+                !hideBorder && "border-r border-white/20",
                 className,
             )}
         >
@@ -72,19 +74,11 @@ export const SidebarNavigationSimple = ({
                 )}
             </div>
 
-            <NavList activeUrl={activeUrl} items={items} />
+            <NavListBrand activeUrl={activeUrl} items={items} />
 
             <div className="mt-auto flex flex-col gap-4 px-2 py-4 lg:px-4 lg:py-6">
                 {footerItems.length > 0 && (
-                    <ul className="flex flex-col">
-                        {footerItems.map((item) => (
-                            <li key={item.label} className="py-0.5">
-                                <NavItemBase badge={item.badge} icon={item.icon} href={item.href} type="link" current={item.href === activeUrl}>
-                                    {item.label}
-                                </NavItemBase>
-                            </li>
-                        ))}
-                    </ul>
+                    <NavListBrand activeUrl={activeUrl} items={footerItems} isFooter />
                 )}
 
                 {featureCard}

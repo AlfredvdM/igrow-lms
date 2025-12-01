@@ -19,6 +19,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { Users01, Home03, Phone } from '@untitledui/icons';
 import { ChartTooltipContent } from '@/components/application/charts/charts-base';
 import { MetricsSimple } from '@/components/application/metrics/metrics';
 import { CampaignSelector } from '@/components/application/campaign-selector/campaign-selector';
@@ -45,14 +46,14 @@ const DATE_RANGE_OPTIONS = [
 
 type DateRangeValue = typeof DATE_RANGE_OPTIONS[number]['value'];
 
-// Color palette for charts
+// Color palette for charts - IGrow brand maroon with complementary grays
 const CHART_COLORS = [
-  chartColorsHex.brand.primary,
-  chartColorsHex.charts.blue,
-  chartColorsHex.charts.green,
-  chartColorsHex.charts.orange,
-  chartColorsHex.charts.purple,
-  chartColorsHex.charts.red,
+  chartColorsHex.brand.primary,      // #b6364b - IGrow maroon
+  chartColorsHex.charts.gray,        // #9CA3AF - Gray for secondary data
+  chartColorsHex.brand.secondary,    // #79273a - Dark maroon
+  chartColorsHex.charts.grayDark,    // #4B5563 - Dark gray
+  chartColorsHex.brand.tertiary,     // #e8b4be - Light rose
+  chartColorsHex.charts.grayLight,   // #D1D5DB - Light gray
 ];
 
 // Loading skeleton for metric cards
@@ -87,12 +88,22 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border-secondary bg-bg-primary p-6 shadow-xs">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-fg-primary">{title}</h3>
-        {subtitle && <p className="text-sm text-fg-tertiary mt-1">{subtitle}</p>}
+    <div
+      className="group relative rounded-2xl border border-white/20 p-8 transition-all duration-300 overflow-hidden hover:shadow-xl"
+      style={{
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%)',
+        backdropFilter: 'blur(12px)',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.6)',
+      }}
+    >
+      {/* Gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#b6364b]/[0.02] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+      <div className="relative mb-6">
+        <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+        {subtitle && <p className="text-sm text-gray-500 mt-2">{subtitle}</p>}
       </div>
-      {children}
+      <div className="relative">{children}</div>
     </div>
   );
 }
@@ -186,16 +197,29 @@ export default function InsightsPage() {
   const isAnyLoading = statsLoading || timelineLoading || apartmentLoading || contactLoading || employmentLoading || sourceLoading || leadsLoading;
 
   return (
-    <div className="flex h-full flex-col gap-8 pt-8 pb-12 px-4 lg:px-8">
+    <div
+      className="flex h-full flex-col gap-8 pt-8 pb-12 px-4 lg:px-8 relative"
+      style={{
+        background: 'radial-gradient(ellipse at top, rgba(156, 163, 175, 0.08) 0%, rgba(156, 163, 175, 0.04) 50%, transparent 100%)',
+      }}
+    >
+      {/* Subtle vignette effect */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 0%, rgba(107, 114, 128, 0.03) 100%)',
+        }}
+      />
+
       {/* Page Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex flex-col gap-0.5 lg:gap-1">
           <h1 className="text-xl font-semibold text-primary lg:text-display-xs">Insights</h1>
           <p className="text-md text-tertiary">
             Analytics and performance metrics for your campaigns.
           </p>
         </div>
-        <div className="w-full lg:w-64">
+        <div className="relative z-50 w-full lg:w-64">
           <CampaignSelector
             selectedCampaignId={selectedCampaignId}
             onCampaignChange={setSelectedCampaignId}
@@ -203,11 +227,10 @@ export default function InsightsPage() {
         </div>
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Metric Cards - 3 Column Grid with Gradient */}
+      <div className="relative z-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {statsLoading ? (
           <>
-            <MetricSkeleton />
             <MetricSkeleton />
             <MetricSkeleton />
             <MetricSkeleton />
@@ -215,30 +238,29 @@ export default function InsightsPage() {
         ) : (
           <>
             <MetricsSimple
+              type="gradient"
               title={stats?.totalLeads.toLocaleString() || '0'}
               subtitle="Total Leads"
-              trend="neutral"
+              icon={Users01}
             />
             <MetricsSimple
-              title={stats?.leadsThisWeek.toLocaleString() || '0'}
-              subtitle="Leads This Week"
-              trend={stats?.leadsThisWeek && stats.leadsThisWeek > 0 ? 'positive' : 'neutral'}
-            />
-            <MetricsSimple
+              type="gradient"
               title={stats?.topApartmentType?.replace(' Apartment', '').replace(' Penthouse', ' PH') || '-'}
-              subtitle="Top Apartment Type"
-              trend="neutral"
+              subtitle="Top Apartment"
+              icon={Home03}
             />
             <MetricsSimple
+              type="gradient"
               title={stats?.topContactMethod || '-'}
               subtitle="Top Contact Method"
-              trend="neutral"
+              icon={Phone}
             />
           </>
         )}
       </div>
 
       {/* Lead Volume Timeline */}
+      <div className="relative z-10">
       {timelineLoading ? (
         <ChartSkeleton height={300} />
       ) : (
@@ -320,9 +342,10 @@ export default function InsightsPage() {
           </div>
         </div>
       )}
+      </div>
 
       {/* Two Column Charts */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="relative z-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Apartment Preference */}
         {apartmentLoading ? (
           <ChartSkeleton height={280} />
@@ -404,7 +427,7 @@ export default function InsightsPage() {
       </div>
 
       {/* Three Column Charts */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="relative z-10 grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Best Outreach Time */}
         {leadsLoading ? (
           <ChartSkeleton height={220} />

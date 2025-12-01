@@ -2,7 +2,6 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useTheme } from "next-themes";
 import { useSearchParams, useRouter } from "next/navigation";
 
 import { Tabs, TabList, TabPanel } from "@/components/application/tabs/tabs";
@@ -11,12 +10,10 @@ import { Input } from "@/components/base/input/input";
 import { Label } from "@/components/base/input/label";
 import { TextArea } from "@/components/base/textarea/textarea";
 import { DialogTrigger, ModalOverlay, Modal, Dialog } from "@/components/application/modals/modal";
-import { Avatar } from "@/components/base/avatar/avatar";
-import { Sun, Moon01, Monitor05, Trash03, Lock01 } from "@untitledui/icons";
+import { Trash03, Lock01 } from "@untitledui/icons";
 
 function SettingsContent() {
     const { user, isLoaded } = useUser();
-    const { theme, setTheme } = useTheme();
     const searchParams = useSearchParams();
     const router = useRouter();
     const [selectedTab, setSelectedTab] = useState("profile");
@@ -24,7 +21,7 @@ function SettingsContent() {
     // Update selected tab from URL parameter
     useEffect(() => {
         const tabParam = searchParams?.get('tab');
-        if (tabParam && ['profile', 'appearance', 'security'].includes(tabParam)) {
+        if (tabParam && ['profile', 'security'].includes(tabParam)) {
             setSelectedTab(tabParam);
         }
     }, [searchParams]);
@@ -53,7 +50,6 @@ function SettingsContent() {
                     type="button-gray"
                     items={[
                         { id: "profile", label: "Profile" },
-                        { id: "appearance", label: "Appearance" },
                         { id: "security", label: "Account & Security" },
                     ]}
                 />
@@ -61,22 +57,6 @@ function SettingsContent() {
                 {/* Profile Tab */}
                 <TabPanel id="profile">
                     <div className="mt-6 max-w-2xl space-y-8">
-                        {/* Profile Photo */}
-                        <div>
-                            <Label>Profile Photo</Label>
-                            <div className="mt-3 flex items-center gap-4">
-                                <Avatar
-                                    size="lg"
-                                    src={user?.imageUrl}
-                                    alt={user?.fullName || "User"}
-                                />
-                                <div className="flex gap-3">
-                                    <Button size="sm" color="secondary">Change photo</Button>
-                                    <Button size="sm" color="secondary">Remove</Button>
-                                </div>
-                            </div>
-                        </div>
-
                         {/* Name Fields */}
                         <div className="grid gap-6 sm:grid-cols-2">
                             <div>
@@ -125,63 +105,6 @@ function SettingsContent() {
                         <div className="flex justify-end gap-3 border-t border-border-secondary pt-6">
                             <Button size="md" color="secondary">Cancel</Button>
                             <Button size="md" color="primary">Save changes</Button>
-                        </div>
-                    </div>
-                </TabPanel>
-
-                {/* Appearance Tab */}
-                <TabPanel id="appearance">
-                    <div className="mt-6 max-w-2xl space-y-8">
-                        <div>
-                            <Label>Theme</Label>
-                            <p className="mt-1 text-sm text-fg-tertiary">Select your preferred theme for the dashboard.</p>
-
-                            <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                                <button
-                                    onClick={() => setTheme('light')}
-                                    className={`flex flex-col items-center gap-3 rounded-lg border-2 p-6 transition-all hover:border-brand-300 ${
-                                        theme === 'light' ? 'border-brand-600 bg-brand-50' : 'border-border-secondary'
-                                    }`}
-                                >
-                                    <Sun className="h-8 w-8 text-fg-quaternary" />
-                                    <div className="text-center">
-                                        <p className="font-semibold text-fg-primary">Light</p>
-                                        <p className="text-xs text-fg-tertiary">Bright and clean</p>
-                                    </div>
-                                </button>
-
-                                <button
-                                    onClick={() => setTheme('dark')}
-                                    className={`flex flex-col items-center gap-3 rounded-lg border-2 p-6 transition-all hover:border-brand-300 ${
-                                        theme === 'dark' ? 'border-brand-600 bg-brand-50' : 'border-border-secondary'
-                                    }`}
-                                >
-                                    <Moon01 className="h-8 w-8 text-fg-quaternary" />
-                                    <div className="text-center">
-                                        <p className="font-semibold text-fg-primary">Dark</p>
-                                        <p className="text-xs text-fg-tertiary">Easy on the eyes</p>
-                                    </div>
-                                </button>
-
-                                <button
-                                    onClick={() => setTheme('system')}
-                                    className={`flex flex-col items-center gap-3 rounded-lg border-2 p-6 transition-all hover:border-brand-300 ${
-                                        theme === 'system' ? 'border-brand-600 bg-brand-50' : 'border-border-secondary'
-                                    }`}
-                                >
-                                    <Monitor05 className="h-8 w-8 text-fg-quaternary" />
-                                    <div className="text-center">
-                                        <p className="font-semibold text-fg-primary">System</p>
-                                        <p className="text-xs text-fg-tertiary">Match your OS</p>
-                                    </div>
-                                </button>
-                            </div>
-
-                            <div className="mt-4 rounded-lg border border-border-secondary bg-secondary_subtle p-4">
-                                <p className="text-sm text-fg-quaternary">
-                                    <span className="font-semibold">Current theme:</span> {theme || 'system'}
-                                </p>
-                            </div>
                         </div>
                     </div>
                 </TabPanel>

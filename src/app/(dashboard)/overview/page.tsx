@@ -145,7 +145,7 @@ export default function OverviewPage() {
                     <p className="text-xl font-semibold text-primary lg:text-display-xs">Overview</p>
                     <p className="text-md text-tertiary">High-level performance metrics and recent lead activity.</p>
                 </div>
-                <div className="w-full lg:w-64">
+                <div className="relative z-50 w-full lg:w-64">
                     <CampaignSelector
                         selectedCampaignId={selectedCampaignId}
                         onCampaignChange={setSelectedCampaignId}
@@ -154,7 +154,7 @@ export default function OverviewPage() {
             </div>
 
             {/* Key Metrics Grid */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {displayMetrics.map((metric, index) => (
                     <MetricsSimple
                         key={index}
@@ -168,8 +168,16 @@ export default function OverviewPage() {
             </div>
 
             {/* Lead Generation Timeline */}
-            <div className="flex flex-col gap-6 rounded-xl ring-secondary ring-inset lg:gap-5 lg:bg-primary lg:p-6 lg:shadow-xs lg:ring-1">
-                <div className="flex flex-col gap-5">
+            <div
+                className="group relative flex flex-col gap-6 rounded-2xl border border-white/20 p-8 transition-all duration-300 overflow-hidden"
+                style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%)',
+                    backdropFilter: 'blur(12px)',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.6)',
+                }}
+            >
+                <div className="absolute inset-0 bg-gradient-to-br from-[#b6364b]/[0.02] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative flex flex-col gap-5">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-lg font-semibold text-primary">Leads Coming In</p>
@@ -229,8 +237,16 @@ export default function OverviewPage() {
             </div>
 
             {/* Recent Lead Activity */}
-            <div className="flex flex-col gap-6 rounded-xl ring-secondary ring-inset lg:gap-5 lg:bg-primary lg:p-6 lg:shadow-xs lg:ring-1">
-                <div className="flex flex-col gap-4">
+            <div
+                className="group relative flex flex-col gap-6 rounded-2xl border border-white/20 p-8 transition-all duration-300 overflow-hidden"
+                style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%)',
+                    backdropFilter: 'blur(12px)',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.6)',
+                }}
+            >
+                <div className="absolute inset-0 bg-gradient-to-br from-[#b6364b]/[0.02] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative flex flex-col gap-4">
                     <div>
                         <p className="text-lg font-semibold text-primary">Recent Lead Activity</p>
                         <p className="text-sm text-tertiary mt-1">Latest leads coming into the system</p>
@@ -277,34 +293,34 @@ export default function OverviewPage() {
 
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead>
-                            <tr className="border-b border-border-secondary">
-                                <th className="pb-3 text-left text-xs font-medium text-fg-tertiary">Name</th>
-                                <th className="pb-3 text-left text-xs font-medium text-fg-tertiary">Source</th>
-                                <th className="pb-3 text-left text-xs font-medium text-fg-tertiary">Intent</th>
-                                <th className="pb-3 text-left text-xs font-medium text-fg-tertiary">Score</th>
-                                <th className="pb-3 text-left text-xs font-medium text-fg-tertiary">Status</th>
-                                <th className="pb-3 text-left text-xs font-medium text-fg-tertiary">Time</th>
+                        <thead className="bg-gray-50">
+                            <tr className="border-b border-gray-100">
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Name</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Source</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Intent</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Score</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Status</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Time</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border-secondary">
+                        <tbody className="divide-y divide-gray-100">
                             {filteredLeads.map((lead) => (
-                                <tr key={lead.id} className="hover:bg-bg-secondary/50 transition-colors">
-                                    <td className="py-3">
+                                <tr key={lead.id} className="hover:bg-gray-50 transition-colors duration-150">
+                                    <td className="px-6 py-4">
                                         <div>
                                             <p className="text-sm font-medium text-fg-primary">{lead.name}</p>
                                             <p className="text-xs text-fg-quaternary">{lead.email}</p>
                                         </div>
                                     </td>
-                                    <td className="py-3">
+                                    <td className="px-6 py-4">
                                         <p className="text-sm text-fg-secondary">{lead.source}</p>
                                     </td>
-                                    <td className="py-3">
+                                    <td className="px-6 py-4">
                                         <Badge size="sm" color={getIntentBadgeColor(lead.intent)}>
                                             {lead.intent}
                                         </Badge>
                                     </td>
-                                    <td className="py-3">
+                                    <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
                                             <div className="w-12 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
                                                 <div
@@ -315,14 +331,14 @@ export default function OverviewPage() {
                                             <span className="text-sm font-medium text-fg-primary">{lead.score}</span>
                                         </div>
                                     </td>
-                                    <td className="py-3">
+                                    <td className="px-6 py-4">
                                         {lead.status && (
                                             <Badge size="sm" color={getStatusBadgeColor(lead.status.toLowerCase())}>
                                                 {lead.status}
                                             </Badge>
                                         )}
                                     </td>
-                                    <td className="py-3">
+                                    <td className="px-6 py-4">
                                         <p className="text-sm text-fg-quaternary">{lead.time}</p>
                                     </td>
                                 </tr>

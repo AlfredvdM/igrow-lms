@@ -29,23 +29,23 @@ export function ChartTooltipContent({
         : label;
 
     return (
-        <div className="rounded-lg border border-border-secondary bg-bg-primary p-3 shadow-lg">
+        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-md">
             {formattedLabel && (
-                <p className="mb-2 text-xs font-medium text-fg-quaternary_hover">
+                <p className="mb-3 text-xs font-semibold text-gray-700">
                     {formattedLabel}
                 </p>
             )}
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
                 {payload.map((entry, index) => (
-                    <div key={index} className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
+                    <div key={index} className="flex items-center justify-between gap-6">
+                        <div className="flex items-center gap-2.5">
                             <div
-                                className="size-2 rounded-full"
+                                className="size-3 rounded-full shadow-sm"
                                 style={{ backgroundColor: isPieChart ? entry.fill : entry.color }}
                             />
-                            <span className="text-sm text-fg-tertiary">{entry.name}</span>
+                            <span className="text-sm text-gray-600">{entry.name}</span>
                         </div>
-                        <span className="text-sm font-semibold text-fg-primary">
+                        <span className="text-sm font-bold text-gray-900">
                             {typeof entry.value === "number"
                                 ? entry.value.toLocaleString()
                                 : entry.value}

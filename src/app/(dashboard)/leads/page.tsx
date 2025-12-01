@@ -210,7 +210,7 @@ export default function LeadsPage() {
             View and manage all leads for your campaigns.
           </p>
         </div>
-        <div className="w-full lg:w-64">
+        <div className="relative z-50 w-full lg:w-64">
           <CampaignSelector
             selectedCampaignId={selectedCampaignId}
             onCampaignChange={handleCampaignChange}
@@ -219,10 +219,19 @@ export default function LeadsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div
+        className="group relative rounded-2xl border border-white/10 p-6 transition-all duration-300 overflow-hidden hover:shadow-xl"
+        style={{
+          background: 'linear-gradient(135deg, #b6364b 0%, #8e2c3e 50%, #79273a 100%)',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)',
+        }}
+      >
+        {/* Shimmer effect on hover */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.1] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+        <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-fg-secondary">Search</label>
+            <label className="text-sm font-medium text-white/90">Search</label>
             <Input
               size="md"
               placeholder="Name, email, or phone..."
@@ -233,7 +242,7 @@ export default function LeadsPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-fg-secondary">Apartment Type</label>
+            <label className="text-sm font-medium text-white/90">Apartment Type</label>
             <Select
               size="md"
               placeholder="Select apartment"
@@ -247,7 +256,7 @@ export default function LeadsPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-fg-secondary">Contact Method</label>
+            <label className="text-sm font-medium text-white/90">Contact Method</label>
             <Select
               size="md"
               placeholder="Select method"
@@ -261,7 +270,7 @@ export default function LeadsPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-fg-secondary">Best Time to Contact</label>
+            <label className="text-sm font-medium text-white/90">Best Time to Contact</label>
             <Select
               size="md"
               placeholder="Select time"
@@ -275,7 +284,7 @@ export default function LeadsPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-fg-secondary">Date Range</label>
+            <label className="text-sm font-medium text-white/90">Date Range</label>
             <Select
               size="md"
               placeholder="Select range"
@@ -288,14 +297,21 @@ export default function LeadsPage() {
             </Select>
           </div>
         </div>
-
-        <p className="text-sm text-fg-quaternary">
-          Showing {showingFrom} - {showingTo} of {totalCount.toLocaleString()} leads
-        </p>
       </div>
 
+      <p className="text-sm text-fg-quaternary">
+        Showing {showingFrom} - {showingTo} of {totalCount.toLocaleString()} leads
+      </p>
+
       {/* Table Container */}
-      <div className="flex-1 overflow-hidden rounded-xl border border-border-secondary bg-bg-primary shadow-xs">
+      <div
+        className="flex-1 overflow-hidden rounded-2xl border border-white/20 transition-all duration-300"
+        style={{
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%)',
+          backdropFilter: 'blur(12px)',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.6)',
+        }}
+      >
         <div className="overflow-x-auto">
           {isLoading ? (
             <div className="p-6">
@@ -325,21 +341,21 @@ export default function LeadsPage() {
             </div>
           ) : (
             <table className="w-full">
-              <thead className="bg-bg-secondary">
-                <tr className="border-b border-border-secondary">
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-fg-quaternary">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-fg-quaternary">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-fg-quaternary">Phone</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-fg-quaternary">Contact</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-fg-quaternary">Best Time</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-fg-quaternary">Apartment</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-fg-quaternary">Employment</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-fg-quaternary">Date</th>
+              <thead className="bg-gray-50">
+                <tr className="border-b border-gray-100">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Name</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Email</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Phone</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Contact</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Best Time</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Apartment</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Employment</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-secondary">
+              <tbody className="divide-y divide-gray-100">
                 {leads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-bg-secondary/50 transition-colors">
+                  <tr key={lead.id} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className="px-6 py-4">
                       <p className="text-sm font-medium text-fg-primary whitespace-nowrap">
                         {lead.first_name} {lead.last_name || ''}

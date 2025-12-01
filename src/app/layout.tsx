@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { RouteProvider } from "@/providers/router-provider";
 import { QueryProvider } from "@/providers/query-provider";
@@ -7,10 +7,10 @@ import { Theme } from "@/providers/theme";
 import "@/styles/globals.css";
 import { cx } from "@/utils/cx";
 
-const inter = Inter({
+const plusJakartaSans = Plus_Jakarta_Sans({
     subsets: ["latin"],
     display: "swap",
-    variable: "--font-inter",
+    variable: "--font-plus-jakarta-sans",
 });
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-    themeColor: "#7f56d9",
+    themeColor: "#a63346",
     colorScheme: "light dark",
 };
 
@@ -35,7 +35,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className={cx(inter.variable, "bg-primary antialiased")}>
+            <body className={cx(plusJakartaSans.variable, "bg-primary antialiased")}>
                 <ClerkProvider>
                     <QueryProvider>
                         <RouteProvider>

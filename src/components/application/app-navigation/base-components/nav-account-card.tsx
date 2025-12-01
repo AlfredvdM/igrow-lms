@@ -3,19 +3,17 @@
 import type { FC, HTMLAttributes } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Placement } from "@react-types/overlays";
-import { ChevronSelectorVertical, LogOut01 } from "@untitledui/icons";
+import { ChevronSelectorVertical, LogOut01, User01 } from "@untitledui/icons";
 import { useFocusManager } from "react-aria";
 import type { DialogProps as AriaDialogProps } from "react-aria-components";
 import { Button as AriaButton, Dialog as AriaDialog, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { cx } from "@/utils/cx";
 
 const settingsTabs = [
     { id: "profile", label: "Profile" },
-    { id: "appearance", label: "Appearance" },
     { id: "security", label: "Account & Security" },
 ];
 
@@ -131,20 +129,21 @@ export const NavAccountCard = ({
 
     // Use Clerk user data if available, otherwise fallback to placeholder
     const currentUser = isLoaded && user ? {
-        avatar: user.imageUrl,
         name: user.fullName || user.firstName || 'User',
         email: user.primaryEmailAddress?.emailAddress || '',
-        status: 'online' as const,
     } : {
-        avatar: '',
         name: 'User',
         email: '',
-        status: 'online' as const,
     };
 
     if (!isLoaded) {
         return (
-            <div className="relative flex items-center gap-3 rounded-xl p-3 ring-1 ring-secondary ring-inset">
+            <div
+                className="relative flex items-center gap-3 rounded-xl p-3 ring-1 ring-secondary ring-inset"
+                style={{
+                    background: 'linear-gradient(135deg, rgba(243, 244, 246, 0.95) 0%, rgba(249, 250, 251, 0.9) 100%)',
+                }}
+            >
                 <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200" />
                 <div className="flex-1">
                     <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
@@ -155,14 +154,25 @@ export const NavAccountCard = ({
     }
 
     return (
-        <div ref={triggerRef} className="relative flex items-center gap-3 rounded-xl p-3 ring-1 ring-secondary ring-inset">
-            <AvatarLabelGroup
-                size="md"
-                src={currentUser.avatar}
-                title={currentUser.name}
-                subtitle={currentUser.email}
-                status={currentUser.status}
-            />
+        <div
+            ref={triggerRef}
+            className="relative flex items-center gap-3 rounded-xl p-3 ring-1 ring-secondary ring-inset transition-all duration-200 hover:shadow-sm"
+            style={{
+                background: 'linear-gradient(135deg, rgba(243, 244, 246, 0.95) 0%, rgba(249, 250, 251, 0.9) 100%)',
+            }}
+        >
+            {/* Person Icon */}
+            <div
+                className="flex items-center justify-center rounded-full p-2.5 bg-gray-200"
+            >
+                <User01 className="size-6 text-gray-600" />
+            </div>
+
+            {/* User Info */}
+            <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-gray-900 truncate">{currentUser.name}</p>
+                <p className="text-xs text-gray-600 truncate">{currentUser.email}</p>
+            </div>
 
             <div className="absolute top-1.5 right-1.5">
                 <AriaDialogTrigger>

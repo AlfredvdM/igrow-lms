@@ -23,9 +23,9 @@ export const chartColors = {
 // Hex colors for Recharts (which need actual color values, not Tailwind classes)
 export const chartColorsHex = {
     brand: {
-        primary: "#7F56D9",
-        secondary: "#9E77ED",
-        tertiary: "#D6BBFB",
+        primary: "#b6364b",  // IGrow maroon
+        secondary: "#79273a", // Dark maroon for gradients
+        tertiary: "#e8b4be",  // Soft rose
     },
     status: {
         success: "#12B76A",
@@ -35,10 +35,12 @@ export const chartColorsHex = {
     },
     charts: {
         blue: "#2E90FA",
-        purple: "#7F56D9",
+        purple: "#b6364b",    // Use IGrow maroon instead of purple
         green: "#12B76A",
         orange: "#F79009",
         red: "#F04438",
-        gray: "#98A2B3",
+        gray: "#9CA3AF",      // Gray-400 for complementary data
+        grayDark: "#4B5563",  // Gray-600 for tertiary data
+        grayLight: "#D1D5DB", // Gray-300 for background/inactive
     },
 };
