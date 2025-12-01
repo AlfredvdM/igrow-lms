@@ -10,6 +10,14 @@ import { Button } from '@/components/base/buttons/button';
 import { SocialButton } from '@/components/base/buttons/social-button';
 import { Input } from '@/components/base/input/input';
 
+// Allowed email domains for sign-up
+const ALLOWED_DOMAINS = ['gasmarketing.co.za', 'igrow.co.za'];
+
+const isAllowedEmailDomain = (email: string): boolean => {
+  const domain = email.split('@')[1]?.toLowerCase();
+  return ALLOWED_DOMAINS.includes(domain);
+};
+
 export default function SignUpPage() {
   const { signUp, setActive, isLoaded } = useSignUp();
   const { isSignedIn } = useAuth();
@@ -35,6 +43,12 @@ export default function SignUpPage() {
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isLoaded || !signUp) return;
+
+    // Validate email domain
+    if (!isAllowedEmailDomain(email)) {
+      setError('Access restricted to @gasmarketing.co.za and @igrow.co.za email addresses only.');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -104,7 +118,14 @@ export default function SignUpPage() {
     } catch (err: unknown) {
       const clerkError = err as { errors?: Array<{ message: string; longMessage?: string }> };
       if (clerkError.errors && clerkError.errors.length > 0) {
-        setError(clerkError.errors[0].longMessage || clerkError.errors[0].message);
+        const errorMessage = clerkError.errors[0].longMessage || clerkError.errors[0].message;
+
+        // Check for domain restriction errors from Clerk
+        if (errorMessage.toLowerCase().includes('not allowed') || errorMessage.toLowerCase().includes('allowlist')) {
+          setError('Access restricted to @gasmarketing.co.za and @igrow.co.za email addresses only.');
+        } else {
+          setError(errorMessage);
+        }
       } else {
         setError('Failed to sign up with Google. Please try again.');
       }

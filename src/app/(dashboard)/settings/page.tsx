@@ -126,20 +126,6 @@ function SettingsContent() {
                             </div>
                         </div>
 
-                        {/* Two-Factor Authentication */}
-                        <div className="rounded-lg border border-border-secondary p-6">
-                            <div className="flex items-start gap-4">
-                                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-success-50">
-                                    <Lock01 className="h-5 w-5 text-success-600" />
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="font-semibold text-fg-primary">Two-Factor Authentication</h3>
-                                    <p className="mt-1 text-sm text-fg-tertiary">Add an extra layer of security to your account.</p>
-                                    <Button size="sm" color="secondary" className="mt-4">Enable 2FA</Button>
-                                </div>
-                            </div>
-                        </div>
-
                         {/* Delete Account */}
                         <div className="rounded-lg border border-error-200 bg-error-50 p-6">
                             <div className="flex items-start gap-4">
