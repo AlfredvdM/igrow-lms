@@ -299,7 +299,7 @@ async function syncCampaign(campaign: Campaign): Promise<SyncResult> {
 
       const { error } = await supabaseAdmin
         .from('leads')
-        .upsert(batch, {
+        .upsert(batch as any, {
           onConflict: 'campaign_id,email,submitted_at',
           ignoreDuplicates: false,
         });
