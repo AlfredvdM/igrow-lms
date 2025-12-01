@@ -22,13 +22,6 @@ export const overviewMetrics = [
         changeDescription: "vs last month",
     },
     {
-        title: "682",
-        subtitle: "Converted Leads",
-        trend: "positive" as const,
-        change: "+18.5%",
-        changeDescription: "vs last month",
-    },
-    {
         title: "76",
         subtitle: "Avg Lead Score",
         trend: "positive" as const,

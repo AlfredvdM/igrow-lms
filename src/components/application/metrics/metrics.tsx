@@ -35,7 +35,7 @@ export function MetricsSimple({
         >
             <div className="flex flex-col gap-1">
                 <p className="text-md font-medium text-fg-quaternary_hover">{subtitle}</p>
-                <p className="text-display-md font-semibold text-fg-primary">{title}</p>
+                <p className="text-display-sm font-semibold text-fg-primary">{title}</p>
             </div>
             {change && (
                 <div className="flex items-center gap-1">

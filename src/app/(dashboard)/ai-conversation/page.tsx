@@ -6,6 +6,7 @@ import {
     Bar,
     BarChart,
     CartesianGrid,
+    Cell,
     Label,
     Legend,
     Line,
@@ -21,34 +22,99 @@ import { ChartTooltipContent, ChartLegendContent } from "@/components/applicatio
 import { MetricsSimple } from "@/components/application/metrics/metrics";
 import { TabList, Tabs } from "@/components/application/tabs/tabs";
 import { Button } from "@/components/base/buttons/button";
+import { Badge } from "@/components/base/badges/badges";
 import { CampaignSelector } from "@/components/application/campaign-selector/campaign-selector";
 import { useCampaign } from "@/providers/campaign-provider";
 import { CampaignInactive } from "@/components/application/empty-state/campaign-inactive";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
-import {
-    conversationalAIMetrics,
-    moveInTimingAIData,
-    incomeBracketAIData,
-    apartmentPreferenceAIData,
-    leadViabilityTimelineData,
-    utmSourceAIData,
-    utmMediumAIData,
-    contactMethodAIData,
-    employmentStatusAIData,
-    petPreferenceAIData,
-    contactTimeAIData,
-    documentReadinessAIData,
-} from "@/data/the-aura/conversational-ai-analytics-data";
+import { useAIConversationData } from "@/hooks/use-leads";
 import { chartColorsHex } from "@/data/common/chart-colors";
 
 export default function AIConversationPage() {
     const { selectedCampaignId, setSelectedCampaignId } = useCampaign();
     const isDesktop = useBreakpoint("lg");
 
+    // Fetch live data from API
+    const { data, isLoading, error } = useAIConversationData();
+
     // Show inactive state for The Bolton
     if (selectedCampaignId === "the-bolton") {
         return <CampaignInactive campaignName="The Bolton" pageName="Conversational AI Analytics" />;
     }
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="flex h-full items-center justify-center">
+                <div className="text-center">
+                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand-600 border-t-transparent mx-auto"></div>
+                    <p className="mt-4 text-sm font-medium text-fg-primary">Loading AI conversation data...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !data?.success) {
+        return (
+            <div className="flex h-full items-center justify-center">
+                <div className="text-center max-w-md">
+                    <p className="text-lg font-semibold text-fg-primary">Failed to load data</p>
+                    <p className="mt-2 text-sm text-fg-tertiary">
+                        {error?.message || 'Please check your Google Sheets configuration and try again.'}
+                    </p>
+                    <Button size="md" color="primary" className="mt-4" onClick={() => window.location.reload()}>
+                        Retry
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    const { stats, charts, leads } = data.data;
+
+    // Use real chart data from API
+    const moveInTimingAIData = charts.moveInTimingData || [];
+    const incomeBracketAIData = charts.incomeBracketData || [];
+    const apartmentPreferenceAIData = charts.apartmentPreferenceData || [];
+    const leadViabilityTimelineData = charts.timeSeriesData || [];
+
+    // Placeholder data for charts not yet implemented
+    const utmSourceAIData: any[] = [];
+    const utmMediumAIData: any[] = [];
+    const contactMethodAIData: any[] = [];
+    const employmentStatusAIData: any[] = [];
+    const petPreferenceAIData: any[] = [];
+    const contactTimeAIData: any[] = [];
+    const documentReadinessAIData: any[] = [];
+
+    // Prepare metrics for display
+    const displayMetrics = [
+        {
+            title: stats.totalLeads.toLocaleString(),
+            subtitle: "Total AI Conversations",
+            trend: "positive" as const,
+            change: "+18.2%",
+        },
+        {
+            title: `${stats.highIntentPercentage}%`,
+            subtitle: "High Intent Rate",
+            trend: "positive" as const,
+            change: `${stats.highIntentCount} leads`,
+        },
+        {
+            title: stats.avgSentimentScore.toString(),
+            subtitle: "Avg Sentiment Score",
+            trend: "positive" as const,
+            change: "+0.3pts",
+        },
+        {
+            title: stats.avgLeadScore.toString(),
+            subtitle: "Avg Lead Score",
+            trend: "positive" as const,
+            change: "+5pts",
+        },
+    ];
 
     return (
         <div className="flex h-full flex-col gap-8 pt-8 pb-12 px-4 lg:px-8">
@@ -68,7 +134,7 @@ export default function AIConversationPage() {
 
             {/* Lead Quality Metrics Grid */}
             <div className="flex w-full flex-col flex-wrap gap-4 lg:flex-row lg:gap-5">
-                {conversationalAIMetrics.map((metric, index) => (
+                {displayMetrics.map((metric, index) => (
                     <MetricsSimple
                         key={index}
                         title={metric.title}
@@ -109,7 +175,11 @@ export default function AIConversationPage() {
                                     name="Leads"
                                     radius={[0, 4, 4, 0]}
                                     maxBarSize={40}
-                                />
+                                >
+                                    {moveInTimingAIData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                                    ))}
+                                </Bar>
                             </BarChart>
                         </ResponsiveContainer>
                     </div>

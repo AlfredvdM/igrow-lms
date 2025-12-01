@@ -1,9 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { SearchLg } from "@untitledui/icons";
-import { Input } from "@/components/base/input/input";
-import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
+import Image from "next/image";
 import { cx } from "@/utils/cx";
 import { MobileNavigationHeader } from "../base-components/mobile-header";
 import { NavAccountCard } from "../base-components/nav-account-card";
@@ -26,6 +24,8 @@ interface SidebarNavigationProps {
     hideBorder?: boolean;
     /** Additional CSS classes to apply to the sidebar. */
     className?: string;
+    /** Currently selected campaign name to display. */
+    selectedCampaignName?: string;
 }
 
 export const SidebarNavigationSimple = ({
@@ -36,6 +36,7 @@ export const SidebarNavigationSimple = ({
     showAccountCard = true,
     hideBorder = false,
     className,
+    selectedCampaignName,
 }: SidebarNavigationProps) => {
     const MAIN_SIDEBAR_WIDTH = 296;
 
@@ -53,8 +54,22 @@ export const SidebarNavigationSimple = ({
             )}
         >
             <div className="flex flex-col gap-5 px-4 lg:px-5">
-                <UntitledLogo className="h-8" />
-                <Input shortcut size="sm" aria-label="Search" placeholder="Search" icon={SearchLg} />
+                <div className="flex items-center gap-3">
+                    <Image
+                        src="https://cdn.prod.website-files.com/68f0849e4b2688b01e255a47/690983d52fd448e267770035_IGrow-Rentals%202.png"
+                        alt="IGrow Rentals"
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 object-contain"
+                        priority
+                    />
+                    <span className="text-lg font-semibold text-fg-primary">IGrow Rentals</span>
+                </div>
+                {selectedCampaignName && (
+                    <p className="text-sm text-fg-tertiary">
+                        You are now viewing <span className="font-semibold text-fg-primary">{selectedCampaignName}</span>.
+                    </p>
+                )}
             </div>
 
             <NavList activeUrl={activeUrl} items={items} />

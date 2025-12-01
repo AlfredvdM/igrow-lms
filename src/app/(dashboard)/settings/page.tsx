@@ -1,24 +1,33 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
+import { useSearchParams, useRouter } from "next/navigation";
+
 import { Tabs, TabList, TabPanel } from "@/components/application/tabs/tabs";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { Label } from "@/components/base/input/label";
 import { TextArea } from "@/components/base/textarea/textarea";
-import { Toggle } from "@/components/base/toggle/toggle";
 import { DialogTrigger, ModalOverlay, Modal, Dialog } from "@/components/application/modals/modal";
 import { Avatar } from "@/components/base/avatar/avatar";
-import { Sun, Moon01, Monitor05, Trash03, Lock01, Mail01, Bell01 } from "@untitledui/icons";
+import { Sun, Moon01, Monitor05, Trash03, Lock01 } from "@untitledui/icons";
 
-export default function SettingsPage() {
+function SettingsContent() {
     const { user, isLoaded } = useUser();
     const { theme, setTheme } = useTheme();
-    const [emailNotifications, setEmailNotifications] = useState(true);
-    const [pushNotifications, setPushNotifications] = useState(true);
-    const [marketingEmails, setMarketingEmails] = useState(false);
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const [selectedTab, setSelectedTab] = useState("profile");
+
+    // Update selected tab from URL parameter
+    useEffect(() => {
+        const tabParam = searchParams.get('tab');
+        if (tabParam && ['profile', 'appearance', 'security'].includes(tabParam)) {
+            setSelectedTab(tabParam);
+        }
+    }, [searchParams]);
 
     if (!isLoaded) {
         return (
@@ -39,14 +48,13 @@ export default function SettingsPage() {
                 <p className="text-md text-tertiary">Manage your account settings and preferences.</p>
             </div>
 
-            <Tabs>
+            <Tabs selectedKey={selectedTab} onSelectionChange={(key) => setSelectedTab(key as string)}>
                 <TabList
                     type="button-gray"
                     items={[
                         { id: "profile", label: "Profile" },
                         { id: "appearance", label: "Appearance" },
                         { id: "security", label: "Account & Security" },
-                        { id: "notifications", label: "Notifications" },
                     ]}
                 />
 
@@ -274,72 +282,22 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </TabPanel>
-
-                {/* Notifications Tab */}
-                <TabPanel id="notifications">
-                    <div className="mt-6 max-w-2xl space-y-8">
-                        {/* Email Notifications */}
-                        <div className="rounded-lg border border-border-secondary p-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-start gap-4">
-                                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary_alt">
-                                        <Mail01 className="h-5 w-5 text-fg-quaternary" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-fg-primary">Email Notifications</h3>
-                                        <p className="mt-1 text-sm text-fg-tertiary">Receive email updates about your account activity.</p>
-                                    </div>
-                                </div>
-                                <Toggle
-                                    size="md"
-                                    isSelected={emailNotifications}
-                                    onChange={setEmailNotifications}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Push Notifications */}
-                        <div className="rounded-lg border border-border-secondary p-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-start gap-4">
-                                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary_alt">
-                                        <Bell01 className="h-5 w-5 text-fg-quaternary" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-fg-primary">Push Notifications</h3>
-                                        <p className="mt-1 text-sm text-fg-tertiary">Receive push notifications for important updates.</p>
-                                    </div>
-                                </div>
-                                <Toggle
-                                    size="md"
-                                    isSelected={pushNotifications}
-                                    onChange={setPushNotifications}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Marketing Emails */}
-                        <div className="rounded-lg border border-border-secondary p-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-start gap-4">
-                                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary_alt">
-                                        <Mail01 className="h-5 w-5 text-fg-quaternary" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-fg-primary">Marketing Emails</h3>
-                                        <p className="mt-1 text-sm text-fg-tertiary">Receive news, tips, and product updates via email.</p>
-                                    </div>
-                                </div>
-                                <Toggle
-                                    size="md"
-                                    isSelected={marketingEmails}
-                                    onChange={setMarketingEmails}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </TabPanel>
             </Tabs>
         </div>
+    );
+}
+
+export default function SettingsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-full items-center justify-center">
+                <div className="text-center">
+                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand-600 border-t-transparent mx-auto"></div>
+                    <p className="mt-4 text-sm font-medium text-fg-primary">Loading settings...</p>
+                </div>
+            </div>
+        }>
+            <SettingsContent />
+        </Suspense>
     );
 }

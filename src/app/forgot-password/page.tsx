@@ -1,52 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSignIn, useAuth } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useSignIn } from '@clerk/nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail01, Lock01 } from '@untitledui/icons';
+import { Mail01, ArrowLeft } from '@untitledui/icons';
 import { Button } from '@/components/base/buttons/button';
-import { SocialButton } from '@/components/base/buttons/social-button';
 import { Input } from '@/components/base/input/input';
 
-export default function SignInPage() {
-  const { signIn, setActive, isLoaded } = useSignIn();
-  const { isSignedIn } = useAuth();
-  const router = useRouter();
-
-  // Redirect if already signed in
-  useEffect(() => {
-    if (isSignedIn) {
-      router.push('/insights');
-    }
-  }, [isSignedIn, router]);
+export default function ForgotPasswordPage() {
+  const { signIn, isLoaded } = useSignIn();
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const handleEmailSignIn = async (e: React.FormEvent) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isLoaded || !signIn) return;
 
     setIsLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
-      const result = await signIn.create({
+      await signIn.create({
+        strategy: 'reset_password_email_code',
         identifier: email,
-        password,
       });
 
-      if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId });
-        router.push('/insights');
-      } else {
-        setError('Sign in failed. Please try again.');
-      }
+      setSuccessMessage('Check your email for a password reset link.');
     } catch (err: unknown) {
       const clerkError = err as { errors?: Array<{ message: string; longMessage?: string }> };
       if (clerkError.errors && clerkError.errors.length > 0) {
@@ -59,32 +43,9 @@ export default function SignInPage() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    if (!isLoaded || !signIn) return;
-
-    setIsGoogleLoading(true);
-    setError(null);
-
-    try {
-      await signIn.authenticateWithRedirect({
-        strategy: 'oauth_google',
-        redirectUrl: '/sso-callback',
-        redirectUrlComplete: '/insights',
-      });
-    } catch (err: unknown) {
-      const clerkError = err as { errors?: Array<{ message: string; longMessage?: string }> };
-      if (clerkError.errors && clerkError.errors.length > 0) {
-        setError(clerkError.errors[0].longMessage || clerkError.errors[0].message);
-      } else {
-        setError('Failed to sign in with Google. Please try again.');
-      }
-      setIsGoogleLoading(false);
-    }
-  };
-
   return (
     <div className="flex min-h-screen">
-      {/* Left side - Sign in form */}
+      {/* Left side - Form */}
       <div className="flex w-full flex-col justify-between px-4 py-8 lg:w-1/2 lg:px-12 xl:px-24">
         {/* Logo */}
         <div className="flex items-center gap-2">
@@ -102,10 +63,10 @@ export default function SignInPage() {
         <div className="mx-auto w-full max-w-[360px]">
           <div className="mb-8 text-center">
             <h1 className="text-display-sm font-semibold text-fg-primary lg:text-display-md">
-              Welcome back
+              Forgot password?
             </h1>
             <p className="mt-3 text-md text-fg-tertiary">
-              Sign in to your account to continue.
+              No worries, we&apos;ll send you reset instructions.
             </p>
           </div>
 
@@ -116,32 +77,15 @@ export default function SignInPage() {
             </div>
           )}
 
-          {/* Google Sign In */}
-          <div className="mb-6">
-            <SocialButton
-              social="google"
-              theme="gray"
-              size="lg"
-              className="w-full"
-              onClick={handleGoogleSignIn}
-              disabled={isGoogleLoading || !isLoaded}
-            >
-              {isGoogleLoading ? 'Signing in...' : 'Sign in with Google'}
-            </SocialButton>
-          </div>
-
-          {/* Divider */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border-secondary" />
+          {/* Success message */}
+          {successMessage && (
+            <div className="mb-6 rounded-lg border border-success-300 bg-success-50 p-4">
+              <p className="text-sm text-success-700">{successMessage}</p>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-bg-primary px-3 text-fg-quaternary">or</span>
-            </div>
-          </div>
+          )}
 
-          {/* Email/Password Form */}
-          <form onSubmit={handleEmailSignIn} className="space-y-5">
+          {/* Reset Password Form */}
+          <form onSubmit={handleResetPassword} className="space-y-5">
             <Input
               label="Email"
               type="email"
@@ -154,27 +98,6 @@ export default function SignInPage() {
               size="md"
             />
 
-            <Input
-              label="Password"
-              type="password"
-              placeholder="Enter your password"
-              icon={Lock01}
-              value={password}
-              onChange={setPassword}
-              isRequired
-              isDisabled={isLoading}
-              size="md"
-            />
-
-            <div className="flex items-center justify-end">
-              <Link
-                href="/forgot-password"
-                className="text-sm font-semibold text-fg-brand-primary hover:text-fg-brand-primary_hover"
-              >
-                Forgot password?
-              </Link>
-            </div>
-
             <Button
               type="submit"
               color="primary"
@@ -183,20 +106,20 @@ export default function SignInPage() {
               isLoading={isLoading}
               isDisabled={!isLoaded || isLoading}
             >
-              Sign in
+              Reset password
             </Button>
           </form>
 
-          {/* Sign up link */}
-          <p className="mt-8 text-center text-sm text-fg-tertiary">
-            Don&apos;t have an account?{' '}
+          {/* Back to sign in */}
+          <div className="mt-8 text-center">
             <Link
-              href="/sign-up"
-              className="font-semibold text-fg-brand-primary hover:text-fg-brand-primary_hover"
+              href="/sign-in"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-fg-tertiary hover:text-fg-secondary"
             >
-              Sign up
+              <ArrowLeft className="size-4" />
+              Back to sign in
             </Link>
-          </p>
+          </div>
         </div>
 
         {/* Footer */}

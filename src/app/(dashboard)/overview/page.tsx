@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useMemo } from "react";
 import {
     Area,
     AreaChart,
@@ -19,28 +20,84 @@ import { MetricsSimple } from "@/components/application/metrics/metrics";
 import { TabList, Tabs } from "@/components/application/tabs/tabs";
 import { Button } from "@/components/base/buttons/button";
 import { Badge } from "@/components/base/badges/badges";
+import { Select } from "@/components/base/select/select";
+import { DateRangePicker } from "@/components/application/date-picker/date-range-picker";
 import { CampaignSelector } from "@/components/application/campaign-selector/campaign-selector";
 import { useCampaign } from "@/providers/campaign-provider";
 import { CampaignInactive } from "@/components/application/empty-state/campaign-inactive";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
-import {
-    overviewMetrics,
-    leadTimelineData,
-    leadIntentData,
-    leadStatusData,
-    topSourcesData,
-    recentLeadActivity,
-} from "@/data/the-aura/overview-data";
+import { useOverviewData } from "@/hooks/use-leads";
 import { chartColorsHex } from "@/data/common/chart-colors";
+import type { LeadIntent, LeadStatus } from "@/types/sheets";
 
 export default function OverviewPage() {
     const { selectedCampaignId, setSelectedCampaignId } = useCampaign();
     const isDesktop = useBreakpoint("lg");
 
+    // Fetch live data from API
+    const { data, isLoading, error } = useOverviewData();
+
+    // Filter states - ALL HOOKS MUST BE AT THE TOP
+    const [sourceFilter, setSourceFilter] = useState<string>("all");
+    const [intentFilter, setIntentFilter] = useState<string>("all");
+    const [dateRange, setDateRange] = useState<any>(null);
+
+    // Filter leads based on selected filters - useMemo must be before any returns
+    const filteredLeads = useMemo(() => {
+        const recentActivity = data?.data?.recentActivity;
+        if (!recentActivity) return [];
+
+        return recentActivity.filter((lead) => {
+            // Source filter
+            if (sourceFilter !== "all") {
+                const isLeadForm = lead.source.includes("Lead Form");
+                const isAIConversation = lead.source.includes("AI Conversation");
+                if (sourceFilter === "lead-form" && !isLeadForm) return false;
+                if (sourceFilter === "ai-conversation" && !isAIConversation) return false;
+            }
+
+            // Intent filter
+            if (intentFilter !== "all" && lead.intent !== intentFilter) return false;
+
+            return true;
+        });
+    }, [data?.data?.recentActivity, sourceFilter, intentFilter, dateRange]);
+
     // Show inactive state for The Bolton
     if (selectedCampaignId === "the-bolton") {
         return <CampaignInactive campaignName="The Bolton" pageName="Overview" />;
     }
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="flex h-full items-center justify-center">
+                <div className="text-center">
+                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand-600 border-t-transparent mx-auto"></div>
+                    <p className="mt-4 text-sm font-medium text-fg-primary">Loading overview data...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !data?.success) {
+        return (
+            <div className="flex h-full items-center justify-center">
+                <div className="text-center max-w-md">
+                    <p className="text-lg font-semibold text-fg-primary">Failed to load data</p>
+                    <p className="mt-2 text-sm text-fg-tertiary">
+                        {error?.message || 'Please check your Google Sheets configuration and try again.'}
+                    </p>
+                    <Button size="md" color="primary" className="mt-4" onClick={() => window.location.reload()}>
+                        Retry
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    const { metrics, recentActivity, timelineData } = data.data;
 
     const getIntentBadgeColor = (intent: string) => {
         if (intent === "High") return "success";
@@ -54,6 +111,31 @@ export default function OverviewPage() {
         if (status === "contacted") return "blue-light";
         return "gray";
     };
+
+    // Use real timeline data from API
+    const leadTimelineData = timelineData || [];
+
+    // Prepare metrics for display
+    const displayMetrics = [
+        {
+            title: metrics.totalLeads.toLocaleString(),
+            subtitle: "Total Leads",
+            trend: metrics.totalLeadsChange.startsWith('+') ? "positive" as const : "negative" as const,
+            change: metrics.totalLeadsChange,
+        },
+        {
+            title: `${metrics.highIntentPercentage}%`,
+            subtitle: "High Intent Leads",
+            trend: metrics.highIntentChange.startsWith('+') ? "positive" as const : "negative" as const,
+            change: metrics.highIntentChange,
+        },
+        {
+            title: metrics.avgLeadScore.toString(),
+            subtitle: "Avg Lead Score",
+            trend: metrics.avgScoreChange.startsWith('+') ? "positive" as const : "negative" as const,
+            change: metrics.avgScoreChange,
+        },
+    ];
 
     return (
         <div className="flex h-full flex-col gap-8 pt-8 pb-12 px-4 lg:px-8">
@@ -72,8 +154,8 @@ export default function OverviewPage() {
             </div>
 
             {/* Key Metrics Grid */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
-                {overviewMetrics.map((metric, index) => (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+                {displayMetrics.map((metric, index) => (
                     <MetricsSimple
                         key={index}
                         title={metric.title}
@@ -146,109 +228,51 @@ export default function OverviewPage() {
                 </div>
             </div>
 
-            {/* Lead Intent, Status, and Sources - 3 column grid */}
-            <div className="grid gap-6 lg:grid-cols-3">
-                {/* Lead Intent Distribution (Pie Chart) */}
-                <div className="flex flex-col gap-6 rounded-xl ring-secondary ring-inset lg:gap-5 lg:bg-primary lg:p-6 lg:shadow-xs lg:ring-1">
-                    <div>
-                        <p className="text-lg font-semibold text-primary">Lead Intent</p>
-                        <p className="text-sm text-tertiary mt-1">Intent distribution</p>
-                    </div>
-
-                    <div className="h-64 flex items-center justify-center">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Legend
-                                    verticalAlign="bottom"
-                                    align="center"
-                                    layout="horizontal"
-                                    content={<ChartLegendContent />}
-                                />
-                                <RechartsTooltip content={<ChartTooltipContent isPieChart />} />
-                                <Pie
-                                    data={leadIntentData}
-                                    dataKey="value"
-                                    nameKey="name"
-                                    cx="50%"
-                                    cy="40%"
-                                    outerRadius={60}
-                                    paddingAngle={2}
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                {/* Lead Status (Horizontal Bar Chart) */}
-                <div className="flex flex-col gap-6 rounded-xl ring-secondary ring-inset lg:gap-5 lg:bg-primary lg:p-6 lg:shadow-xs lg:ring-1">
-                    <div>
-                        <p className="text-lg font-semibold text-primary">Lead Status</p>
-                        <p className="text-sm text-tertiary mt-1">Current pipeline</p>
-                    </div>
-
-                    <div className="h-64 flex items-center justify-center">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                                data={leadStatusData}
-                                layout="vertical"
-                                className="text-tertiary [&_.recharts-text]:text-xs"
-                                margin={{ left: 10, right: 10, top: 5, bottom: 5 }}
-                            >
-                                <CartesianGrid horizontal={false} stroke="currentColor" className="text-utility-gray-100" />
-                                <XAxis type="number" axisLine={false} tickLine={false} />
-                                <YAxis dataKey="status" type="category" axisLine={false} tickLine={false} width={80} />
-                                <RechartsTooltip content={<ChartTooltipContent />} />
-                                <Bar
-                                    dataKey="count"
-                                    name="Leads"
-                                    radius={[0, 4, 4, 0]}
-                                    maxBarSize={30}
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                {/* Lead Sources (Pie Chart) */}
-                <div className="flex flex-col gap-6 rounded-xl ring-secondary ring-inset lg:gap-5 lg:bg-primary lg:p-6 lg:shadow-xs lg:ring-1">
-                    <div>
-                        <p className="text-lg font-semibold text-primary">Lead Sources</p>
-                        <p className="text-sm text-tertiary mt-1">Form vs AI split</p>
-                    </div>
-
-                    <div className="h-64 flex items-center justify-center">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Legend
-                                    verticalAlign="bottom"
-                                    align="center"
-                                    layout="horizontal"
-                                    content={<ChartLegendContent />}
-                                />
-                                <RechartsTooltip content={<ChartTooltipContent isPieChart />} />
-                                <Pie
-                                    data={topSourcesData}
-                                    dataKey="leads"
-                                    nameKey="source"
-                                    cx="50%"
-                                    cy="40%"
-                                    outerRadius={60}
-                                    paddingAngle={2}
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-            </div>
-
             {/* Recent Lead Activity */}
             <div className="flex flex-col gap-6 rounded-xl ring-secondary ring-inset lg:gap-5 lg:bg-primary lg:p-6 lg:shadow-xs lg:ring-1">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4">
                     <div>
                         <p className="text-lg font-semibold text-primary">Recent Lead Activity</p>
                         <p className="text-sm text-tertiary mt-1">Latest leads coming into the system</p>
                     </div>
-                    <Button size="md" color="link-gray">View all leads</Button>
+
+                    {/* Filters */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Select
+                            size="md"
+                            placeholder="All sources"
+                            selectedKey={sourceFilter}
+                            onSelectionChange={(key) => setSourceFilter(key as string)}
+                            items={[
+                                { id: "all", label: "All sources" },
+                                { id: "lead-form", label: "Lead Form" },
+                                { id: "ai-conversation", label: "AI Conversation" },
+                            ]}
+                            className="w-48"
+                        >
+                            {(item) => <Select.Item id={item.id} key={item.id}>{item.label}</Select.Item>}
+                        </Select>
+
+                        <Select
+                            size="md"
+                            placeholder="All intents"
+                            selectedKey={intentFilter}
+                            onSelectionChange={(key) => setIntentFilter(key as string)}
+                            items={[
+                                { id: "all", label: "All intents" },
+                                { id: "High", label: "High" },
+                                { id: "Low", label: "Low" },
+                            ]}
+                            className="w-48"
+                        >
+                            {(item) => <Select.Item id={item.id} key={item.id}>{item.label}</Select.Item>}
+                        </Select>
+
+                        <DateRangePicker
+                            value={dateRange}
+                            onChange={setDateRange}
+                        />
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -264,7 +288,7 @@ export default function OverviewPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border-secondary">
-                            {recentLeadActivity.map((lead) => (
+                            {filteredLeads.map((lead) => (
                                 <tr key={lead.id} className="hover:bg-bg-secondary/50 transition-colors">
                                     <td className="py-3">
                                         <div>
@@ -292,9 +316,11 @@ export default function OverviewPage() {
                                         </div>
                                     </td>
                                     <td className="py-3">
-                                        <Badge size="sm" color={getStatusBadgeColor(lead.status)}>
-                                            {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
-                                        </Badge>
+                                        {lead.status && (
+                                            <Badge size="sm" color={getStatusBadgeColor(lead.status.toLowerCase())}>
+                                                {lead.status}
+                                            </Badge>
+                                        )}
                                     </td>
                                     <td className="py-3">
                                         <p className="text-sm text-fg-quaternary">{lead.time}</p>
@@ -303,6 +329,12 @@ export default function OverviewPage() {
                             ))}
                         </tbody>
                     </table>
+
+                    {filteredLeads.length === 0 && (
+                        <div className="py-12 text-center">
+                            <p className="text-sm text-tertiary">No leads found matching the selected filters.</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

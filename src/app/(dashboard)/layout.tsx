@@ -7,12 +7,11 @@
 
 import { ReactNode } from 'react';
 import { SidebarNavigationSimple } from "@/components/application/app-navigation/sidebar-navigation/sidebar-simple";
-import { CampaignProvider } from "@/providers/campaign-provider";
+import { CampaignProvider, useCampaign } from "@/providers/campaign-provider";
+import { campaigns } from "@/components/application/campaign-selector/campaign-selector";
 import {
+    Users01,
     BarChartSquare02,
-    MessageChatSquare,
-    FileCheck02,
-    Settings01,
 } from "@untitledui/icons";
 
 interface DashboardLayoutProps {
@@ -20,33 +19,25 @@ interface DashboardLayoutProps {
 }
 
 function DashboardLayoutContent({ children }: DashboardLayoutProps) {
+  const { selectedCampaignId } = useCampaign();
+  const selectedCampaign = campaigns.find(c => c.id === selectedCampaignId);
+
   return (
     <div className="flex min-h-screen flex-col bg-primary lg:flex-row">
       <SidebarNavigationSimple
         hideBorder
         showAccountCard={true}
+        selectedCampaignName={selectedCampaign?.name}
         items={[
           {
-            label: "Overview",
-            href: "/overview",
+            label: "Lead List",
+            href: "/leads",
+            icon: Users01,
+          },
+          {
+            label: "Insights",
+            href: "/insights",
             icon: BarChartSquare02,
-          },
-          {
-            label: "Lead Form",
-            href: "/lead-form",
-            icon: FileCheck02,
-          },
-          {
-            label: "AI Conversation",
-            href: "/ai-conversation",
-            icon: MessageChatSquare,
-          },
-        ]}
-        footerItems={[
-          {
-            label: "Settings",
-            href: "/settings",
-            icon: Settings01,
           },
         ]}
         className="border-r-0"

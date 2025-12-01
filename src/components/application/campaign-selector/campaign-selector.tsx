@@ -19,7 +19,7 @@ export const campaigns: Campaign[] = [
     {
         id: "the-bolton",
         name: "The Bolton",
-        status: "inactive",
+        status: "active",
     },
 ];
 
