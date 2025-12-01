@@ -39,7 +39,11 @@ function PasswordChangeModalContent({
     handlePasswordChange: (close: () => void) => Promise<void>;
 }) {
     const state = useContext(OverlayTriggerStateContext);
-    const close = () => state?.close();
+    const close = () => {
+        if (state?.close) {
+            state.close();
+        }
+    };
 
     return (
         <div className="rounded-xl bg-primary p-6 shadow-xl ring-1 ring-secondary ring-inset">
@@ -108,14 +112,16 @@ function PasswordChangeModalContent({
 
             {/* Modal Footer */}
             <div className="mt-6 flex justify-end gap-3 border-t border-border-secondary pt-4">
-                <Button
-                    size="md"
-                    color="secondary"
-                    isDisabled={isChangingPassword}
-                    onClick={close}
-                >
-                    Cancel
-                </Button>
+                <form method="dialog" className="contents">
+                    <Button
+                        type="submit"
+                        size="md"
+                        color="secondary"
+                        isDisabled={isChangingPassword}
+                    >
+                        Cancel
+                    </Button>
+                </form>
                 <Button
                     size="md"
                     color="primary"
