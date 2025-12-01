@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail01, Lock01 } from '@untitledui/icons';
+import { Button as AriaButton } from 'react-aria-components';
 import { Button } from '@/components/base/buttons/button';
 import { Input } from '@/components/base/input/input';
 import { DialogTrigger, ModalOverlay, Modal, Dialog } from '@/components/application/modals/modal';
@@ -169,12 +170,9 @@ export default function SignInPage() {
 
             <div className="flex items-center justify-end">
               <DialogTrigger>
-                <button
-                  type="button"
-                  className="text-sm font-semibold text-fg-brand-primary hover:text-fg-brand-primary_hover"
-                >
+                <AriaButton className="text-sm font-semibold text-fg-brand-primary hover:text-fg-brand-primary_hover cursor-pointer">
                   Forgot password?
-                </button>
+                </AriaButton>
                 <ModalOverlay isDismissable>
                   <Modal>
                     <Dialog className="w-full max-w-lg">
