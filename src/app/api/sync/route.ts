@@ -29,7 +29,7 @@ interface SyncResult {
  * Verify authentication for the sync endpoint
  * Accepts either:
  * - Vercel Cron: x-vercel-cron header (automatically set by Vercel)
- * - Manual: Authorization: Bearer <CRON_SECRET>
+ * - Manual: x-cron-secret header (avoids Clerk intercepting Authorization header)
  */
 function verifyAuth(request: NextRequest): boolean {
   // Check for Vercel Cron header (automatically added by Vercel for cron jobs)
@@ -38,11 +38,11 @@ function verifyAuth(request: NextRequest): boolean {
     return true;
   }
 
-  // Check for Bearer token authentication (manual triggers)
-  const authHeader = request.headers.get('Authorization');
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    return token === process.env.CRON_SECRET;
+  // Check for custom header authentication (manual triggers)
+  // Using x-cron-secret instead of Authorization to avoid Clerk JWT parsing
+  const cronSecret = request.headers.get('x-cron-secret');
+  if (cronSecret && cronSecret === process.env.CRON_SECRET) {
+    return true;
   }
 
   return false;
