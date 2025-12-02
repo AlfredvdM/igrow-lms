@@ -197,7 +197,7 @@ export default function OverviewPage() {
                     </Tabs>
                 </div>
 
-                <div className="h-80 flex items-center justify-center">
+                <div className="h-64 md:h-80 flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart
                             data={leadTimelineData}

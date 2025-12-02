@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createSupabaseBrowserClient } from '@/lib/supabase';
 import type { Lead, Campaign, ApartmentPreference, PreferredContact, BestOutreachTime } from '@/types/database';
 
@@ -606,5 +606,73 @@ export function useRecentLeads(campaignSlug: string, limit: number = 10) {
       return (data as Lead[]) || [];
     },
     staleTime: STALE_TIME,
+  });
+}
+
+// ============================================================================
+// Delete Mutations
+// ============================================================================
+
+/**
+ * Hook to delete a single lead by ID
+ */
+export function useDeleteLead(campaignSlug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (leadId: string) => {
+      const { error } = await getSupabase()
+        .from('leads')
+        .delete()
+        .eq('id', leadId);
+
+      if (error) {
+        console.error('Error deleting lead:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      // Invalidate all lead-related queries for this campaign
+      queryClient.invalidateQueries({ queryKey: ['leads', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['lead-stats', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['lead-timeline', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['apartment-breakdown', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['contact-method-breakdown', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['employment-breakdown', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['lead-source-breakdown', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['recent-leads', campaignSlug] });
+    },
+  });
+}
+
+/**
+ * Hook to delete multiple leads by IDs
+ */
+export function useDeleteLeads(campaignSlug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (leadIds: string[]) => {
+      const { error } = await getSupabase()
+        .from('leads')
+        .delete()
+        .in('id', leadIds);
+
+      if (error) {
+        console.error('Error deleting leads:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      // Invalidate all lead-related queries for this campaign
+      queryClient.invalidateQueries({ queryKey: ['leads', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['lead-stats', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['lead-timeline', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['apartment-breakdown', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['contact-method-breakdown', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['employment-breakdown', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['lead-source-breakdown', campaignSlug] });
+      queryClient.invalidateQueries({ queryKey: ['recent-leads', campaignSlug] });
+    },
   });
 }

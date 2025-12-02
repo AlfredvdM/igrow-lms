@@ -290,7 +290,7 @@ export default function InsightsPage() {
               ))}
             </div>
           </div>
-          <div className="h-80">
+          <div className="h-64 md:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={formattedTimelineData}
@@ -354,7 +354,7 @@ export default function InsightsPage() {
             title="Apartment Preferences"
             subtitle="Distribution by apartment type"
           >
-            <div className="h-72">
+            <div className="h-56 md:h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={formattedApartmentData}
@@ -391,28 +391,30 @@ export default function InsightsPage() {
             title="Contact Method Distribution"
             subtitle="Preferred ways to contact leads"
           >
-            <div className="h-72 flex items-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={formattedContactData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="value"
-                    nameKey="name"
-                  >
-                    {formattedContactData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip content={<ChartTooltipContent isPieChart />} />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="flex flex-col md:flex-row md:items-center">
+              <div className="h-56 md:h-72 w-full md:flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={formattedContactData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                      nameKey="name"
+                    >
+                      {formattedContactData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip content={<ChartTooltipContent isPieChart />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
               {/* Legend */}
-              <div className="flex flex-col gap-2 pr-4">
+              <div className="flex flex-wrap justify-center gap-4 mt-4 md:mt-0 md:flex-col md:gap-2 md:pr-4">
                 {formattedContactData.map((item, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <div className="size-3 rounded-full" style={{ backgroundColor: item.fill }} />
@@ -436,7 +438,7 @@ export default function InsightsPage() {
             title="Best Time for Outreach"
             subtitle="When leads prefer to be contacted"
           >
-            <div className="h-56">
+            <div className="h-48 md:h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={outreachTimeData} margin={{ left: 0, right: 0, top: 10, bottom: 0 }}>
                   <CartesianGrid vertical={false} stroke="#E4E7EC" />
@@ -467,7 +469,7 @@ export default function InsightsPage() {
             title="Employment Status"
             subtitle="Lead distribution by employment"
           >
-            <div className="h-56">
+            <div className="h-48 md:h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={formattedEmploymentData} margin={{ left: 0, right: 0, top: 10, bottom: 0 }}>
                   <CartesianGrid vertical={false} stroke="#E4E7EC" />
@@ -502,7 +504,7 @@ export default function InsightsPage() {
             title="Lead Source Attribution"
             subtitle="Where leads are coming from"
           >
-            <div className="h-56">
+            <div className="h-48 md:h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={formattedSourceData} margin={{ left: 0, right: 0, top: 10, bottom: 0 }}>
                   <CartesianGrid vertical={false} stroke="#E4E7EC" />

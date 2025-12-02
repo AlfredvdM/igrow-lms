@@ -5,15 +5,18 @@
  * Displays all leads with search, filtering, and pagination
  */
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { SearchLg, ChevronLeft, ChevronRight } from '@untitledui/icons';
+import { Trash2 } from 'lucide-react';
 import { Input } from '@/components/base/input/input';
 import { Select } from '@/components/base/select/select';
 import { Button } from '@/components/base/buttons/button';
 import { Badge } from '@/components/base/badges/badges';
+import { Checkbox } from '@/components/base/checkbox/checkbox';
+import { ConfirmationDialog } from '@/components/application/confirmation-dialog/confirmation-dialog';
 import { CampaignSelector } from '@/components/application/campaign-selector/campaign-selector';
 import { useCampaign } from '@/providers/campaign-provider';
-import { useLeads, type DateRangeFilter } from '@/hooks/use-supabase-leads';
+import { useLeads, useDeleteLead, useDeleteLeads, type DateRangeFilter } from '@/hooks/use-supabase-leads';
 import type { ApartmentPreference, PreferredContact, BestOutreachTime } from '@/types/database';
 
 const ITEMS_PER_PAGE = 20;
@@ -110,6 +113,16 @@ export default function LeadsPage() {
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
+  // Selection state for bulk delete
+  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
+
+  // Delete dialog state
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'single' | 'bulk'; id?: string } | null>(null);
+
+  // Delete mutations
+  const deleteLead = useDeleteLead(selectedCampaignId);
+  const deleteLeads = useDeleteLeads(selectedCampaignId);
+
   // Get campaign-specific apartment options
   const apartmentOptions = selectedCampaignId === 'the-aura'
     ? AURA_APARTMENT_OPTIONS
@@ -199,6 +212,61 @@ export default function LeadsPage() {
     if (method === 'Phone Call') return 'purple';
     return 'gray';
   };
+
+  // Selection handlers
+  const toggleLeadSelection = (leadId: string) => {
+    setSelectedLeads((prev) => {
+      const next = new Set(prev);
+      if (next.has(leadId)) {
+        next.delete(leadId);
+      } else {
+        next.add(leadId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedLeads.size === leads.length) {
+      setSelectedLeads(new Set());
+    } else {
+      setSelectedLeads(new Set(leads.map((lead) => lead.id)));
+    }
+  };
+
+  const isAllSelected = leads.length > 0 && selectedLeads.size === leads.length;
+  const isIndeterminate = selectedLeads.size > 0 && selectedLeads.size < leads.length;
+
+  // Delete handlers
+  const handleDeleteClick = (leadId: string) => {
+    setDeleteTarget({ type: 'single', id: leadId });
+  };
+
+  const handleBulkDeleteClick = () => {
+    setDeleteTarget({ type: 'bulk' });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    try {
+      if (deleteTarget.type === 'single' && deleteTarget.id) {
+        await deleteLead.mutateAsync(deleteTarget.id);
+      } else if (deleteTarget.type === 'bulk') {
+        await deleteLeads.mutateAsync(Array.from(selectedLeads));
+        setSelectedLeads(new Set());
+      }
+      setDeleteTarget(null);
+    } catch (error) {
+      console.error('Delete failed:', error);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setDeleteTarget(null);
+  };
+
+  const isDeleting = deleteLead.isPending || deleteLeads.isPending;
 
   return (
     <div className="flex h-full flex-col gap-6 pt-8 pb-12 px-4 lg:px-8">
@@ -343,6 +411,14 @@ export default function LeadsPage() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr className="border-b border-gray-100">
+                  <th className="w-12 px-4 py-4">
+                    <Checkbox
+                      isSelected={isAllSelected}
+                      isIndeterminate={isIndeterminate}
+                      onChange={toggleSelectAll}
+                      aria-label="Select all leads"
+                    />
+                  </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Name</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Email</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Phone</th>
@@ -351,11 +427,36 @@ export default function LeadsPage() {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Apartment</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Employment</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Date</th>
+                  <th className="w-16 px-4 py-4 text-center text-xs font-semibold text-gray-700">
+                    {selectedLeads.size > 0 ? (
+                      <Button
+                        size="sm"
+                        color="primary-destructive"
+                        onClick={handleBulkDeleteClick}
+                      >
+                        Delete ({selectedLeads.size})
+                      </Button>
+                    ) : (
+                      'Actions'
+                    )}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {leads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-gray-50 transition-colors duration-150">
+                  <tr
+                    key={lead.id}
+                    className={`hover:bg-gray-50 transition-colors duration-150 ${
+                      selectedLeads.has(lead.id) ? 'bg-blue-50/50' : ''
+                    }`}
+                  >
+                    <td className="w-12 px-4 py-4">
+                      <Checkbox
+                        isSelected={selectedLeads.has(lead.id)}
+                        onChange={() => toggleLeadSelection(lead.id)}
+                        aria-label={`Select ${lead.first_name}`}
+                      />
+                    </td>
                     <td className="px-6 py-4">
                       <p className="text-sm font-medium text-fg-primary whitespace-nowrap">
                         {lead.first_name} {lead.last_name || ''}
@@ -413,6 +514,15 @@ export default function LeadsPage() {
                       <span className="text-sm text-fg-quaternary whitespace-nowrap">
                         {formatDate(lead.submitted_at)}
                       </span>
+                    </td>
+                    <td className="w-16 px-4 py-4 text-center">
+                      <button
+                        onClick={() => handleDeleteClick(lead.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete lead"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -478,6 +588,20 @@ export default function LeadsPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={deleteTarget !== null}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirmDelete}
+        title={deleteTarget?.type === 'bulk' ? 'Delete Leads' : 'Delete Lead'}
+        message={
+          deleteTarget?.type === 'bulk'
+            ? `Are you sure you want to delete ${selectedLeads.size} lead${selectedLeads.size > 1 ? 's' : ''}? This action cannot be undone.`
+            : 'Are you sure you want to delete this lead? This action cannot be undone.'
+        }
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
