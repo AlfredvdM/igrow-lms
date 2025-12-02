@@ -8,6 +8,7 @@ const publicRoutes = [
   '/sso-callback',
   '/forgot-password',
   '/auth/callback',
+  '/auth/confirm', // Token verification from email links
   '/auth/reset-password', // Password reset from email link
   '/api/sync', // Sync API uses bearer token auth
 ];
