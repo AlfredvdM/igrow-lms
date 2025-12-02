@@ -104,6 +104,9 @@ function ResetPasswordContent() {
 
       setSuccess(true);
 
+      // Sign out so user can sign in fresh with new password
+      await supabase.auth.signOut();
+
       // Redirect to sign-in after 3 seconds
       setTimeout(() => {
         router.push('/sign-in');
