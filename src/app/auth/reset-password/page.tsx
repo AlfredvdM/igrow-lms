@@ -104,13 +104,13 @@ function ResetPasswordContent() {
 
       setSuccess(true);
 
-      // Sign out so user can sign in fresh with new password
-      await supabase.auth.signOut();
+      // Sign out globally to clear all sessions and cookies
+      await supabase.auth.signOut({ scope: 'global' });
 
-      // Redirect to sign-in after 3 seconds
+      // Force full page reload to clear all client state
       setTimeout(() => {
-        router.push('/sign-in');
-      }, 3000);
+        window.location.href = '/sign-in';
+      }, 1500);
     } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
