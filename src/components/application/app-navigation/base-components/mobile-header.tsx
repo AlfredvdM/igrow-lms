@@ -11,6 +11,7 @@ import {
     ModalOverlay as AriaModalOverlay,
 } from "react-aria-components";
 import { cx } from "@/utils/cx";
+import { MobileMenuProvider } from "./mobile-menu-context";
 
 export const MobileNavigationHeader = ({ children }: PropsWithChildren) => {
     return (
@@ -58,7 +59,11 @@ export const MobileNavigationHeader = ({ children }: PropsWithChildren) => {
                         </AriaButton>
 
                         <AriaModal className="w-full cursor-auto will-change-transform">
-                            <AriaDialog className="h-dvh outline-hidden focus:outline-hidden">{children}</AriaDialog>
+                            <AriaDialog className="h-dvh outline-hidden focus:outline-hidden">
+                                <MobileMenuProvider value={{ close: () => state.close() }}>
+                                    {children}
+                                </MobileMenuProvider>
+                            </AriaDialog>
                         </AriaModal>
                     </>
                 )}

@@ -5,6 +5,7 @@ import { ChevronDown, Share04 } from "@untitledui/icons";
 import { Link as AriaLink } from "react-aria-components";
 import { Badge } from "@/components/base/badges/badges";
 import { cx } from "@/utils/cx";
+import { useMobileMenu } from "./mobile-menu-context";
 
 interface NavItemBrandProps {
     /** Whether the nav item shows only an icon. */
@@ -30,6 +31,13 @@ interface NavItemBrandProps {
 }
 
 export const NavItemBrand = ({ current, type, badge, href, icon: Icon, children, truncate = true, onClick }: NavItemBrandProps) => {
+    const mobileMenu = useMobileMenu();
+
+    const handleLinkClick: MouseEventHandler = (e) => {
+        onClick?.(e);
+        mobileMenu?.close();
+    };
+
     const iconElement = Icon && (
         <Icon
             aria-hidden="true"
@@ -116,7 +124,7 @@ export const NavItemBrand = ({ current, type, badge, href, icon: Icon, children,
                     current ? selectedStyles : hoverStyles
                 )}
                 style={current ? { background: "linear-gradient(135deg, #b6364b 0%, #a63346 50%, #79273a 100%)" } : undefined}
-                onClick={onClick}
+                onClick={handleLinkClick}
                 aria-current={current ? "page" : undefined}
             >
                 {labelElement}
@@ -137,7 +145,7 @@ export const NavItemBrand = ({ current, type, badge, href, icon: Icon, children,
                 current ? selectedStyles : hoverStyles
             )}
             style={current ? { background: "linear-gradient(135deg, #b6364b 0%, #a63346 50%, #79273a 100%)" } : undefined}
-            onClick={onClick}
+            onClick={handleLinkClick}
             aria-current={current ? "page" : undefined}
         >
             {iconElement}

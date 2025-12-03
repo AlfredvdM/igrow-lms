@@ -66,7 +66,7 @@ export default function SignUpPage() {
             first_name: firstName,
             last_name: lastName,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/insights`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=/insights`,
         },
       });
 

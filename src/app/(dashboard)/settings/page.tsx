@@ -137,9 +137,52 @@ function PasswordChangeModalContent({
 // Delete Account Modal Content Component
 function DeleteAccountModalContent() {
     const state = useContext(OverlayTriggerStateContext);
+    const { signOut } = useAuth();
+    const [confirmText, setConfirmText] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+
     const close = () => {
         if (state?.close) {
             state.close();
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        // Validate confirmation text
+        if (confirmText !== 'DELETE') {
+            setDeleteError('Please type "DELETE" to confirm account deletion.');
+            return;
+        }
+
+        setIsDeleting(true);
+        setDeleteError(null);
+
+        try {
+            const supabase = createSupabaseBrowserClient();
+
+            // Delete the user's account
+            // Note: This requires the user to be authenticated
+            // Supabase will handle cascading deletes if configured in the database
+            const { error } = await supabase.rpc('delete_user_account');
+
+            if (error) {
+                // If RPC doesn't exist, try direct sign out with a note
+                if (error.code === 'PGRST202') {
+                    // RPC function doesn't exist - sign out user and show message
+                    setDeleteError('Account deletion is not yet configured. Please contact support to delete your account.');
+                    setIsDeleting(false);
+                    return;
+                }
+                throw error;
+            }
+
+            // Sign out and redirect
+            await signOut();
+        } catch (error) {
+            console.error('Delete account error:', error);
+            setDeleteError('Failed to delete account. Please contact support.');
+            setIsDeleting(false);
         }
     };
 
@@ -152,6 +195,13 @@ function DeleteAccountModalContent() {
                     Are you absolutely sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.
                 </p>
             </div>
+
+            {/* Error Message */}
+            {deleteError && (
+                <div className="mb-4 rounded-lg border border-error-300 bg-error-50 p-4">
+                    <p className="text-sm text-error-700">{deleteError}</p>
+                </div>
+            )}
 
             {/* Modal Content */}
             <div className="space-y-4">
@@ -166,16 +216,30 @@ function DeleteAccountModalContent() {
                 </div>
                 <div>
                     <Label htmlFor="confirmDelete">Type &quot;DELETE&quot; to confirm</Label>
-                    <Input id="confirmDelete" placeholder="DELETE" className="mt-2" />
+                    <Input
+                        id="confirmDelete"
+                        placeholder="DELETE"
+                        className="mt-2"
+                        value={confirmText}
+                        onChange={setConfirmText}
+                        isDisabled={isDeleting}
+                    />
                 </div>
             </div>
 
             {/* Modal Footer */}
             <div className="mt-6 flex justify-end gap-3 border-t border-border-secondary pt-4">
-                <Button size="md" color="secondary" onClick={close}>
+                <Button size="md" color="secondary" onClick={close} isDisabled={isDeleting}>
                     Cancel
                 </Button>
-                <Button size="md" color="primary" className="!bg-error-600 hover:!bg-error-700">
+                <Button
+                    size="md"
+                    color="primary"
+                    className="!bg-error-600 hover:!bg-error-700"
+                    onClick={handleDeleteAccount}
+                    isLoading={isDeleting}
+                    isDisabled={isDeleting || confirmText !== 'DELETE'}
+                >
                     Yes, delete my account
                 </Button>
             </div>
