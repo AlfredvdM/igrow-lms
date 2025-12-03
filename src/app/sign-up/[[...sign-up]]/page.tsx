@@ -58,7 +58,7 @@ export default function SignUpPage() {
     try {
       const supabase = createSupabaseBrowserClient();
 
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -76,6 +76,13 @@ export default function SignUpPage() {
         } else {
           setError(error.message);
         }
+        return;
+      }
+
+      // Check if user already exists - Supabase returns user data but with
+      // identities as empty array when user already exists (for security)
+      if (data?.user?.identities?.length === 0) {
+        setError('An account with this email already exists. Please sign in instead.');
         return;
       }
 
